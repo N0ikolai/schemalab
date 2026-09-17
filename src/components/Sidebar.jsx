@@ -55,7 +55,7 @@ export function Sidebar({ onShowToast }) {
               </div>
               <div className="overflow-hidden">
                 <div className="text-xs font-medium text-slate-200 truncate">{item.nameUk}</div>
-                <div className="text-[10px] text-slate-500">{item.defaultValue > 0 ? `${item.defaultValue} ${item.unit}` : ''}</div>
+                <div className="text-[10px] text-slate-500">{item.defaultValue > 0 || item.kind === 'switch' ? `${item.defaultValue} ${item.unit}` : ''}</div>
               </div>
             </button>
           ))}
@@ -76,13 +76,25 @@ export function Sidebar({ onShowToast }) {
               <input type="text" value={selectedComp.label} onChange={(e) => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, label: e.target.value } : c) }))} className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 font-mono text-slate-100" />
             </div>
 
-            {selectedComp.kind !== 'ground' && selectedComp.kind !== 'voltmeter' && selectedComp.kind !== 'ammeter' && (
+            {selectedComp.kind !== 'ground' && selectedComp.kind !== 'voltmeter' && selectedComp.kind !== 'ammeter' && selectedComp.kind !== 'switch' && (
               <div>
                 <div className="flex justify-between mb-1">
                   <label className="text-slate-400">Номінал ({COMPONENT_CATALOG[selectedComp.kind].unit}):</label>
                   <span className="font-mono font-bold text-sky-400">{selectedComp.value}</span>
                 </div>
                 <input type="number" min="0.01" step={selectedComp.kind === 'led' ? '0.1' : '1'} value={selectedComp.value} onChange={(e) => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, value: parseFloat(e.target.value) || 0 } : c) }))} className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 font-mono text-slate-100" />
+              </div>
+            )}
+
+            {selectedComp.kind === 'switch' && (
+              <div className="flex justify-between items-center mb-1 border border-slate-700 p-2 rounded bg-slate-950">
+                <label className="text-slate-400">Стан:</label>
+                <button 
+                  onClick={() => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, value: c.value === 1 ? 0 : 1 } : c) }))}
+                  className={`px-4 py-1.5 rounded text-xs font-bold transition-colors ${selectedComp.value === 1 ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
+                >
+                  {selectedComp.value === 1 ? 'ЗАМКНЕНО' : 'РОЗІМКНЕНО'}
+                </button>
               </div>
             )}
 

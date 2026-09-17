@@ -72,4 +72,16 @@ export const COMPONENT_CATALOG = {
     ],
     descriptionUk: 'Прилад для вимірювання струму в розриві кола (R = 0 Ом)',
   },
+  switch: {
+    kind: 'switch',
+    nameUk: 'Вимикач',
+    defaultLabelPrefix: 'SW',
+    defaultValue: 0, // 0 - розімкнений, 1 - замкнений
+    unit: '',
+    pins: [
+      { index: 0, x: -30, y: 0, label: '1' },
+      { index: 1, x: 30, y: 0, label: '2' },
+    ],
+    descriptionUk: 'Комутатор струму. Замкнений = 0 Ом, розімкнений = нескінченність',
+  },
 };

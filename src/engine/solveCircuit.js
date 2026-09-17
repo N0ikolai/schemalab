@@ -69,9 +69,13 @@ export function solveCircuit(circuit) {
   const vSources = [];
   const leds = [];
 
+  // ЗБІРКА КОМПОНЕНТІВ (ДОДАНО SWITCH)
   for (const comp of components) {
     if (comp.kind === 'resistor') {
       resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: Math.max(comp.value, 1e-4) });
+    } else if (comp.kind === 'switch') {
+      const r = comp.value === 1 ? 1e-4 : 1e9;
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: r });
     } else if (comp.kind === 'voltmeter') {
       resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: 1e9 });
     } else if (comp.kind === 'battery') {
@@ -104,6 +108,7 @@ export function solveCircuit(circuit) {
   const compResults = {};
   let shortCircuit = false;
 
+  // РОЗРАХУНОК СТРУМУ (ДОДАНО SWITCH)
   for (const comp of components) {
     if (comp.kind === 'ground') {
       compResults[comp.id] = { voltage: 0, current: 0, power: 0 };
@@ -116,6 +121,7 @@ export function solveCircuit(circuit) {
     let isLit = false;
 
     if (comp.kind === 'resistor') current = u / Math.max(comp.value, 1e-4);
+    else if (comp.kind === 'switch') current = u / (comp.value === 1 ? 1e-4 : 1e9);
     else if (comp.kind === 'voltmeter') current = u / 1e9;
     else if (comp.kind === 'battery') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
     else if (comp.kind === 'ammeter') current = mnaRes.vSourceCurrents[comp.id] ?? 0;

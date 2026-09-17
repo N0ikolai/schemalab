@@ -207,6 +207,21 @@ export function CircuitCanvas({ onShowToast }) {
         ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(30, 0); ctx.lineWidth = 2.2; ctx.strokeStyle = '#e2e8f0'; ctx.stroke();
         ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('+', -18, -12);
         ctx.fillStyle = '#ef4444'; ctx.fillText('−', 14, -12);
+      } else if (comp.kind === 'switch') {
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(-30, 0); ctx.lineTo(-12, 0);
+        if (comp.value === 1) {
+          ctx.lineTo(12, 0); // Замкнено
+        } else {
+          ctx.lineTo(12, -14); // Розімкнено
+        }
+        ctx.moveTo(12, 0); ctx.lineTo(30, 0);
+        ctx.stroke();
+        
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath(); ctx.arc(-12, 0, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(12, 0, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       } else if (comp.kind === 'ground') {
         ctx.strokeStyle = '#94a3b8';
         ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(-10, 6); ctx.lineTo(10, 6); ctx.moveTo(-4, 12); ctx.lineTo(4, 12); ctx.stroke();
