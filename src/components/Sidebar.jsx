@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { CircuitContext } from '../context/CircuitContext.jsx';
 import { COMPONENT_CATALOG } from '../constants/componentCatalog.js';
 import { formatVoltage, formatCurrent, formatPower } from '../utils/formatters.js';
+import { Oscilloscope } from './Oscilloscope.jsx'; // ІМПОРТ ОСЦИЛОГРАФА
 
 export function Sidebar({ onShowToast }) {
   const { circuit, setCircuit, selectedComponentId, setSelectedComponentId, setSelectedWireId, solveResult } = useContext(CircuitContext);
@@ -14,7 +15,7 @@ export function Sidebar({ onShowToast }) {
     const newComp = {
       id: `${kind}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       kind, x: 340 + offset, y: 260 + offset,
-      rotation: kind === 'battery' || kind === 'resistor' ? 90 : 0,
+      rotation: kind === 'battery' || kind === 'resistor' || kind === 'ac_source' ? 90 : 0,
       value: meta.defaultValue, label,
       ledColor: kind === 'led' ? 'red' : undefined,
     };
@@ -42,6 +43,7 @@ export function Sidebar({ onShowToast }) {
 
   const selectedComp = circuit.components.find(c => c.id === selectedComponentId);
   const selectedSim = selectedComp ? solveResult.components[selectedComp.id] : null;
+  const hasACSource = circuit.components.some(c => c.kind === 'ac_source');
 
   return (
     <aside className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col h-full overflow-hidden select-none shrink-0">
@@ -111,7 +113,10 @@ export function Sidebar({ onShowToast }) {
               </>
             )}
 
-            {selectedSim && solveResult.success && (
+            {/* ОСЦИЛОГРАФ ВМИКАЄТЬСЯ, ЯКЩО Є AC ДЖЕРЕЛО */}
+            {hasACSource && <Oscilloscope circuit={circuit} selectedCompId={selectedComp.id} />}
+
+            {selectedSim && solveResult.success && !hasACSource && (
               <div className="bg-slate-950 rounded-lg p-3 border border-slate-800 space-y-1.5">
                 <div className="text-[10px] uppercase font-bold text-slate-400">Показники:</div>
                 <div className="flex justify-between"><span className="text-slate-400">Напруга:</span><span className="font-mono font-bold text-sky-400">{formatVoltage(selectedSim.voltage)}</span></div>

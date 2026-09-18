@@ -5,7 +5,7 @@ import { getPinWorldPosition } from '../utils/geometry.js';
 
 function pinKey(cid, pidx) { return `${cid}:${pidx}`; }
 
-export function solveCircuit(circuit) {
+export function solveCircuit(circuit, time = 0) {
   const { components, wires } = circuit;
   if (components.length === 0) return { success: true, nodeVoltages: {}, pinVoltages: {}, components: {} };
 
@@ -54,11 +54,15 @@ export function solveCircuit(circuit) {
     else if (comp.kind === 'switch') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: comp.value === 1 ? 1e-4 : 1e9 });
     else if (comp.kind === 'voltmeter') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: 1e9 });
     else if (comp.kind === 'battery') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: comp.value });
+    else if (comp.kind === 'ac_source') {
+      // РОЗРАХУНОК СИНУСОЇДИ В ЧАСІ
+      const acVoltage = comp.value * Math.sin(2 * Math.PI * 1 * time);
+      vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: acVoltage });
+    }
     else if (comp.kind === 'ammeter') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: 0 });
     else if (comp.kind === 'led' || comp.kind === 'diode') leds.push({ id: comp.id, nodeAnode: getPinNode(comp, 0), nodeCathode: getPinNode(comp, 1), vf: Math.max(comp.value, 0.1), rs: comp.kind === 'diode' ? 1 : 20 });
     else if (comp.kind === 'relay') relays.push({ id: comp.id, nodeCoilPos: getPinNode(comp, 0), nodeCoilNeg: getPinNode(comp, 1), nodeSw1: getPinNode(comp, 2), nodeSw2: getPinNode(comp, 3), vOn: Math.max(comp.value, 0.1) });
     else if (comp.kind === 'npn') {
-      // Макромодель NPN транзистора (Діод Б-Е + Реле К-Е)
       leds.push({ id: `${comp.id}_be`, nodeAnode: getPinNode(comp, 0), nodeCathode: getPinNode(comp, 2), vf: 0.7, rs: 100 });
       relays.push({ id: comp.id, nodeCoilPos: getPinNode(comp, 0), nodeCoilNeg: getPinNode(comp, 2), nodeSw1: getPinNode(comp, 1), nodeSw2: getPinNode(comp, 2), vOn: 0.65 });
     }
@@ -82,7 +86,7 @@ export function solveCircuit(circuit) {
     if (comp.kind === 'resistor') current = u / Math.max(comp.value, 1e-4);
     else if (comp.kind === 'switch') current = u / (comp.value === 1 ? 1e-4 : 1e9);
     else if (comp.kind === 'voltmeter') current = u / 1e9;
-    else if (comp.kind === 'battery') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
+    else if (comp.kind === 'battery' || comp.kind === 'ac_source') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
     else if (comp.kind === 'ammeter') current = mnaRes.vSourceCurrents[comp.id] ?? 0;
     else if (comp.kind === 'led' || comp.kind === 'diode') {
       const lState = mnaRes.ledStates[comp.id];

@@ -49,9 +49,30 @@ export function CircuitCanvas({ onShowToast }) {
   const handleAddWire = (from, to) => {
     const exists = circuit.wires.some(w => (w.from.componentId === from.componentId && w.from.pinIndex === from.pinIndex && w.to.componentId === to.componentId && w.to.pinIndex === to.pinIndex) || (w.from.componentId === to.componentId && w.from.pinIndex === to.pinIndex && w.to.componentId === from.componentId && w.to.pinIndex === from.pinIndex));
     if (exists) return onShowToast('Провід вже зʼєднано');
+
+    // ПЕРЕВІРКА КЗ ТА ПОЛЮСНОСТІ
+    const compA = circuit.components.find(c => c.id === from.componentId);
+    const compB = circuit.components.find(c => c.id === to.componentId);
+    const pinA = COMPONENT_CATALOG[compA.kind].pins.find(p => p.index === from.pinIndex);
+    const pinB = COMPONENT_CATALOG[compB.kind].pins.find(p => p.index === to.pinIndex);
+
+    const isPlusA = pinA?.label?.includes('+');
+    const isMinusA = pinA?.label?.includes('-');
+    const isPlusB = pinB?.label?.includes('+');
+    const isMinusB = pinB?.label?.includes('-');
+
+    if ((isPlusA && isMinusB) || (isMinusA && isPlusB)) {
+      if (compA.id === compB.id && compA.kind === 'battery') {
+        return onShowToast('Помилка: Пряме замикання батареї заборонено!', 'error');
+      }
+      onShowToast('Увага: ви зʼєднали плюс із мінусом', 'warning');
+    } else {
+      onShowToast('Зʼєднання створено', 'success');
+    }
+
     const wire = { id: `w_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, from, to };
     setCircuit(prev => ({ ...prev, wires: [...prev.wires, wire] }));
-    setSelectedWireId(wire.id); setSelectedComponentId(null); onShowToast('Зʼєднання створено', 'success');
+    setSelectedWireId(wire.id); setSelectedComponentId(null); 
   };
 
   useEffect(() => {
@@ -108,6 +129,12 @@ export function CircuitCanvas({ onShowToast }) {
         ctx.beginPath(); ctx.moveTo(-8, -18); ctx.lineTo(-8, 18); ctx.lineWidth = 3; ctx.strokeStyle = '#38bdf8'; ctx.stroke();
         ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(8, 10); ctx.lineWidth = 5; ctx.strokeStyle = '#ef4444'; ctx.stroke();
         ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(30, 0); ctx.lineWidth = 2.2; ctx.strokeStyle = '#e2e8f0'; ctx.stroke();
+      } else if (comp.kind === 'ac_source') {
+        ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-16, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(30, 0); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
+        // Малюємо синусоїду всередині кола
+        ctx.beginPath(); ctx.moveTo(-10, 0); ctx.bezierCurveTo(-5, -12, -5, 12, 0, 0); ctx.bezierCurveTo(5, -12, 5, 12, 10, 0); ctx.stroke();
       } else if (comp.kind === 'switch') {
         ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-12, 0);
         if (comp.value === 1) ctx.lineTo(12, 0); else ctx.lineTo(12, -14);

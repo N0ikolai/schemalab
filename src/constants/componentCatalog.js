@@ -7,9 +7,14 @@ export const COMPONENT_CATALOG = {
     descriptionUk: 'Пасивний опір струму, закон Ома: U = I * R',
   },
   battery: {
-    kind: 'battery', nameUk: 'Джерело напруги', defaultLabelPrefix: 'V', defaultValue: 9, unit: 'В',
+    kind: 'battery', nameUk: 'Джерело DC', defaultLabelPrefix: 'V', defaultValue: 9, unit: 'В',
     pins: [{ index: 0, x: -30, y: 0, label: '+' }, { index: 1, x: 30, y: 0, label: '-' }],
     descriptionUk: 'Джерело постійної електрорушійної сили (DC)',
+  },
+  ac_source: {
+    kind: 'ac_source', nameUk: 'Генератор AC', defaultLabelPrefix: 'VAC', defaultValue: 12, unit: 'В',
+    pins: [{ index: 0, x: -30, y: 0, label: 'L' }, { index: 1, x: 30, y: 0, label: 'N' }],
+    descriptionUk: 'Джерело змінної напруги (Синусоїда)',
   },
   ground: {
     kind: 'ground', nameUk: 'Земля (GND)', defaultLabelPrefix: 'GND', defaultValue: 0, unit: 'В',
