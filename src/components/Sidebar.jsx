@@ -76,7 +76,7 @@ export function Sidebar({ onShowToast }) {
               <input type="text" value={selectedComp.label} onChange={(e) => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, label: e.target.value } : c) }))} className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 font-mono text-slate-100" />
             </div>
 
-            {selectedComp.kind !== 'ground' && selectedComp.kind !== 'voltmeter' && selectedComp.kind !== 'ammeter' && selectedComp.kind !== 'switch' && (
+            {selectedComp.kind !== 'ground' && selectedComp.kind !== 'voltmeter' && selectedComp.kind !== 'ammeter' && selectedComp.kind !== 'switch' && selectedComp.kind !== 'npn' && selectedComp.kind !== 'relay' && selectedComp.kind !== 'diode' && (
               <div>
                 <div className="flex justify-between mb-1">
                   <label className="text-slate-400">Номінал ({COMPONENT_CATALOG[selectedComp.kind].unit}):</label>
@@ -87,15 +87,28 @@ export function Sidebar({ onShowToast }) {
             )}
 
             {selectedComp.kind === 'switch' && (
-              <div className="flex justify-between items-center mb-1 border border-slate-700 p-2 rounded bg-slate-950">
-                <label className="text-slate-400">Стан:</label>
-                <button 
-                  onClick={() => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, value: c.value === 1 ? 0 : 1 } : c) }))}
-                  className={`px-4 py-1.5 rounded text-xs font-bold transition-colors ${selectedComp.value === 1 ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
-                >
-                  {selectedComp.value === 1 ? 'ЗАМКНЕНО' : 'РОЗІМКНЕНО'}
-                </button>
-              </div>
+              <>
+                <div className="flex justify-between items-center mb-1 border border-slate-700 p-2 rounded bg-slate-950">
+                  <label className="text-slate-400">Стан:</label>
+                  <button 
+                    onClick={() => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, value: c.value === 1 ? 0 : 1 } : c) }))}
+                    className={`px-4 py-1.5 rounded text-xs font-bold transition-colors ${selectedComp.value === 1 ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
+                  >
+                    {selectedComp.value === 1 ? 'ЗАМКНЕНО' : 'РОЗІМКНЕНО'}
+                  </button>
+                </div>
+                <div className="flex justify-between items-center mb-1 border border-slate-700 p-2 rounded bg-slate-950">
+                  <label className="text-slate-400">Гаряча клавіша:</label>
+                  <input 
+                    type="text" 
+                    maxLength="1" 
+                    value={selectedComp.hotkey || ''} 
+                    onChange={(e) => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, hotkey: e.target.value.toUpperCase() } : c) }))} 
+                    className="w-10 bg-slate-800 border border-slate-600 rounded text-center text-sky-400 font-bold uppercase" 
+                    placeholder="—"
+                  />
+                </div>
+              </>
             )}
 
             {selectedSim && solveResult.success && (

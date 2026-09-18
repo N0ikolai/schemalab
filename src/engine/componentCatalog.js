@@ -72,4 +72,13 @@ export const COMPONENT_CATALOG = {
     ],
     descriptionUk: 'Прилад для вимірювання струму в розриві кола (R = 0 Ом)',
   },
+  npn: {
+    kind: 'npn', nameUk: 'NPN Транзистор', defaultLabelPrefix: 'Q', defaultValue: 100, unit: 'hFE',
+    pins: [
+      { index: 0, x: -20, y: 0, label: 'B' }, // База
+      { index: 1, x: 20, y: -20, label: 'C' }, // Колектор
+      { index: 2, x: 20, y: 20, label: 'E' }  // Емітер
+    ],
+    descriptionUk: 'Біполярний транзистор (цифрова макромодель ключового режиму)',
+  },
 };
