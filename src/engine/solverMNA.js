@@ -1,7 +1,7 @@
 import { solveGaussPartialPivoting } from './solverGauss.js';
 
 export function solveMNA(netlist) {
-  const { nodeCount, resistors, vSources, leds, relays = [] } = netlist;
+  const { nodeCount, resistors, vSources, leds, relays = [], iSources = [] } = netlist;
   const numVSources = vSources.length;
   const systemSize = nodeCount + numVSources;
 
@@ -54,6 +54,12 @@ export function solveMNA(netlist) {
       if (sA >= 0) A[sA][sA] += gSw;
       if (sB >= 0) A[sB][sB] += gSw;
       if (sA >= 0 && sB >= 0) { A[sA][sB] -= gSw; A[sB][sA] -= gSw; }
+    }
+
+    // НОВЕ: Джерела струму для конденсаторів та котушок
+    for (const is of iSources) {
+      if (is.nodePos >= 0) b[is.nodePos] -= is.current;
+      if (is.nodeNeg >= 0) b[is.nodeNeg] += is.current;
     }
 
     for (let k = 0; k < numVSources; k++) {

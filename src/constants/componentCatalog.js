@@ -6,6 +6,16 @@ export const COMPONENT_CATALOG = {
     pins: [{ index: 0, x: -30, y: 0, label: '1' }, { index: 1, x: 30, y: 0, label: '2' }],
     descriptionUk: 'Пасивний опір струму, закон Ома: U = I * R',
   },
+  capacitor: {
+    kind: 'capacitor', nameUk: 'Конденсатор', defaultLabelPrefix: 'C', defaultValue: 0.001, unit: 'Ф',
+    pins: [{ index: 0, x: -30, y: 0, label: '1' }, { index: 1, x: 30, y: 0, label: '2' }],
+    descriptionUk: 'Накопичує заряд (реактивний елемент)',
+  },
+  inductor: {
+    kind: 'inductor', nameUk: 'Котушка', defaultLabelPrefix: 'L', defaultValue: 1, unit: 'Гн',
+    pins: [{ index: 0, x: -30, y: 0, label: '1' }, { index: 1, x: 30, y: 0, label: '2' }],
+    descriptionUk: 'Накопичує магнітну енергію (реактивний елемент)',
+  },
   battery: {
     kind: 'battery', nameUk: 'Джерело DC', defaultLabelPrefix: 'V', defaultValue: 9, unit: 'В',
     pins: [{ index: 0, x: -30, y: 0, label: '+' }, { index: 1, x: 30, y: 0, label: '-' }],
