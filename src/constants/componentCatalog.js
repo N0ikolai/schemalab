@@ -41,37 +41,35 @@ export const COMPONENT_CATALOG = {
     pins: [{ index: 0, x: 0, y: -20, label: '+' }, { index: 1, x: 0, y: 20, label: '-' }],
     descriptionUk: 'Генератор прямокутних імпульсів (меандр 0..5В)',
   },
+  and: {
+    category: 'logic', kind: 'and', nameUk: 'Елемент І (AND)', defaultLabelPrefix: 'U', defaultValue: 0, unit: '',
+    pins: [{ index: 0, x: -30, y: -10, label: 'IN1' }, { index: 1, x: -30, y: 10, label: 'IN2' }, { index: 2, x: 30, y: 0, label: 'OUT' }],
+    descriptionUk: 'Видає 1 (5В), тільки якщо на обох входах 1.',
+  },
+  or: {
+    category: 'logic', kind: 'or', nameUk: 'Елемент АБО (OR)', defaultLabelPrefix: 'U', defaultValue: 0, unit: '',
+    pins: [{ index: 0, x: -30, y: -10, label: 'IN1' }, { index: 1, x: -30, y: 10, label: 'IN2' }, { index: 2, x: 30, y: 0, label: 'OUT' }],
+    descriptionUk: 'Видає 1 (5В), якщо хоча б на одному вході 1.',
+  },
+  not: {
+    category: 'logic', kind: 'not', nameUk: 'Елемент НЕ (NOT)', defaultLabelPrefix: 'U', defaultValue: 0, unit: '',
+    pins: [{ index: 0, x: -30, y: 0, label: 'IN' }, { index: 1, x: 30, y: 0, label: 'OUT' }],
+    descriptionUk: 'Інвертор. Видає 1, якщо на вході 0, і навпаки.',
+  },
+  nor: {
+    category: 'logic', kind: 'nor', nameUk: 'Елемент АБО-НЕ (NOR)', defaultLabelPrefix: 'U', defaultValue: 0, unit: '',
+    pins: [{ index: 0, x: -30, y: -10, label: 'IN1' }, { index: 1, x: -30, y: 10, label: 'IN2' }, { index: 2, x: 30, y: 0, label: 'OUT' }],
+    descriptionUk: 'Видає 1, тільки якщо на обох входах 0.',
+  },
   switch: {
     category: 'logic', kind: 'switch', nameUk: 'Вимикач', defaultLabelPrefix: 'SW', defaultValue: 0, unit: '',
     pins: [{ index: 0, x: -30, y: 0, label: '1' }, { index: 1, x: 30, y: 0, label: '2' }],
-    descriptionUk: 'Комутатор струму. Замкнений = 0 Ом, розімкнений = нескінченність',
+    descriptionUk: 'Комутатор струму.',
   },
   led: {
     category: 'logic', kind: 'led', nameUk: 'Світлодіод', defaultLabelPrefix: 'LED', defaultValue: 2.0, unit: 'В',
     pins: [{ index: 0, x: -30, y: 0, label: 'A (+)' }, { index: 1, x: 30, y: 0, label: 'K (-)' }],
     descriptionUk: 'Діод з падінням напруги Vf та свіченням',
-  },
-  diode: {
-    category: 'logic', kind: 'diode', nameUk: 'Діод', defaultLabelPrefix: 'D', defaultValue: 0.7, unit: 'В',
-    pins: [{ index: 0, x: -30, y: 0, label: 'A (+)' }, { index: 1, x: 30, y: 0, label: 'K (-)' }],
-    descriptionUk: 'Звичайний кремнієвий діод (для цифрової логіки)',
-  },
-  relay: {
-    category: 'logic', kind: 'relay', nameUk: 'Реле', defaultLabelPrefix: 'K', defaultValue: 3.0, unit: 'В',
-    pins: [
-      { index: 0, x: -20, y: -20, label: 'C+' }, { index: 1, x: -20, y: 20, label: 'C-' },
-      { index: 2, x: 20, y: -20, label: 'SW1' }, { index: 3, x: 20, y: 20, label: 'SW2' }
-    ],
-    descriptionUk: 'Електромагнітне реле. Замикає контакти SW.',
-  },
-  npn: {
-    category: 'logic', kind: 'npn', nameUk: 'NPN Транзистор', defaultLabelPrefix: 'Q', defaultValue: 100, unit: 'hFE',
-    pins: [
-      { index: 0, x: -20, y: 0, label: 'B' }, 
-      { index: 1, x: 20, y: -20, label: 'C' },
-      { index: 2, x: 20, y: 20, label: 'E' }  
-    ],
-    descriptionUk: 'Біполярний транзистор (цифрова макромодель ключового режиму)',
   },
   probe: {
     category: 'measure', kind: 'probe', nameUk: 'Логічний пробник', defaultLabelPrefix: 'PRB', defaultValue: 0, unit: '',

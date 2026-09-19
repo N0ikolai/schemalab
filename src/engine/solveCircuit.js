@@ -5,13 +5,14 @@ import { getPinWorldPosition } from '../utils/geometry.js';
 
 function pinKey(cid, pidx) { return `${cid}:${pidx}`; }
 
-const transientState = { time: 0, lastDt: 0.016, vCap: {}, iInd: {} };
+const transientState = { time: 0, lastDt: 0.016, vCap: {}, iInd: {}, logicState: {} };
 
 export function resetSimulation() {
   transientState.time = 0;
   transientState.lastDt = 0.016;
   transientState.vCap = {};
   transientState.iInd = {};
+  transientState.logicState = {};
 }
 
 export function solveCircuit(circuit, time = 0) {
@@ -70,60 +71,48 @@ export function solveCircuit(circuit, time = 0) {
   }
 
   for (const comp of components) {
-   if (comp.kind === 'resistor') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-18, 0); ctx.lineTo(-14, -10); ctx.lineTo(-8, 10); ctx.lineTo(-2, -10); ctx.lineTo(4, 10); ctx.lineTo(10, -10); ctx.lineTo(14, 10); ctx.lineTo(18, 0); ctx.lineTo(30, 0); ctx.stroke();
-        } else if (comp.kind === 'capacitor') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-4, 0); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(30, 0); ctx.stroke();
-          ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(-4, 12); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(4, -12); ctx.lineTo(4, 12); ctx.stroke();
-        } else if (comp.kind === 'inductor') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-15, 0);
-          ctx.bezierCurveTo(-15, -12, -5, -12, -5, 0); ctx.bezierCurveTo(-5, -12, 5, -12, 5, 0); ctx.bezierCurveTo(5, -12, 15, -12, 15, 0);
-          ctx.lineTo(30, 0); ctx.stroke();
-        } else if (comp.kind === 'battery') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-8, 0); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(-8, -18); ctx.lineTo(-8, 18); ctx.lineWidth = 3; ctx.strokeStyle = '#38bdf8'; ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(8, 10); ctx.lineWidth = 5; ctx.strokeStyle = '#ef4444'; ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(30, 0); ctx.lineWidth = 2.2; ctx.strokeStyle = '#e2e8f0'; ctx.stroke();
-        } else if (comp.kind === 'ac_source') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-16, 0); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(30, 0); ctx.stroke();
-          ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(-10, 0); ctx.bezierCurveTo(-5, -12, -5, 12, 0, 0); ctx.bezierCurveTo(5, -12, 5, 12, 10, 0); ctx.stroke();
-        } else if (comp.kind === 'clock') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(0, -20); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(0, 16); ctx.lineTo(0, 20); ctx.stroke();
-          ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(-8, 6); ctx.lineTo(-8, -6); ctx.lineTo(0, -6); ctx.lineTo(0, 6); ctx.lineTo(8, 6); ctx.stroke();
-        } else if (comp.kind === 'vcc') {
-          ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5;
-          ctx.beginPath(); ctx.moveTo(-12, 0); ctx.lineTo(12, 0); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 20); ctx.stroke();
-          ctx.fillStyle = '#ef4444'; ctx.font = 'bold 12px monospace'; ctx.fillText('+Vcc', 0, -10);
-        } else if (comp.kind === 'probe') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(-12, 0); ctx.stroke();
-          ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2);
-          if (sim?.isLit) { ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 15; } else { ctx.fillStyle = '#1e293b'; }
-          ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
-          if (sim?.isLit) { ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace'; ctx.fillText('1', 0, 4); }
-          else { ctx.fillStyle = '#64748b'; ctx.font = 'bold 14px monospace'; ctx.fillText('0', 0, 4); }
-        } else if (comp.kind === 'switch') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-12, 0);
-          if (comp.value === 1) ctx.lineTo(12, 0); else ctx.lineTo(12, -14);
-          ctx.moveTo(12, 0); ctx.lineTo(30, 0); ctx.stroke();
-          ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(-12, 0, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-          ctx.beginPath(); ctx.arc(12, 0, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        } else if (comp.kind === 'diode' || comp.kind === 'led') {
-          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-12, 0); ctx.moveTo(12, 0); ctx.lineTo(30, 0); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(-12, -14); ctx.lineTo(12, 0); ctx.lineTo(-12, 14); ctx.closePath();
-          if (comp.kind === 'led' && sim?.isLit) { ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 20; } else { ctx.fillStyle = '#1e293b'; }
-          ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
-          ctx.beginPath(); ctx.moveTo(12, -14); ctx.lineTo(12, 14); ctx.lineWidth = 2.5; ctx.stroke();
-        } else if (comp.kind === 'ground') {
-          ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(-10, 6); ctx.lineTo(10, 6); ctx.moveTo(-4, 12); ctx.lineTo(4, 12); ctx.stroke();
-        }
+    if (comp.kind === 'resistor') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: Math.max(comp.value, 1e-4) });
+    else if (comp.kind === 'switch') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: comp.value === 1 ? 1e-4 : 1e9 });
+    else if (comp.kind === 'voltmeter') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: 1e9 });
+    else if (comp.kind === 'probe') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); 
+    else if (comp.kind === 'vcc') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: -1, voltage: 5 }); 
+    else if (['and', 'or', 'nor'].includes(comp.kind)) {
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); // Вхід 1 (високий опір)
+      resistors.push({ nodeA: getPinNode(comp, 1), nodeB: -1, resistance: 1e9 }); // Вхід 2 (високий опір)
+      const outV = transientState.logicState[comp.id] ?? 0;
+      vSources.push({ id: comp.id, nodePos: getPinNode(comp, 2), nodeNeg: -1, voltage: outV }); // Вихід (джерело напруги)
+    }
+    else if (comp.kind === 'not') {
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 });
+      const outV = transientState.logicState[comp.id] ?? 5; // НЕ за замовчуванням видає 1
+      vSources.push({ id: comp.id, nodePos: getPinNode(comp, 1), nodeNeg: -1, voltage: outV });
+    }
+    else if (comp.kind === 'battery') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: comp.value });
+    else if (comp.kind === 'clock') {
+      const freq = Math.max(comp.value, 0.1);
+      const isHigh = (time * freq) % 1 < 0.5; 
+      vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: isHigh ? 5 : 0 });
+    }
+    else if (comp.kind === 'ac_source') {
+      const acVoltage = comp.value * Math.sin(2 * Math.PI * 1 * time);
+      vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: acVoltage });
+    }
+    else if (comp.kind === 'ammeter') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: 0 });
+    else if (comp.kind === 'led' || comp.kind === 'diode') leds.push({ id: comp.id, nodeAnode: getPinNode(comp, 0), nodeCathode: getPinNode(comp, 1), vf: Math.max(comp.value, 0.1), rs: comp.kind === 'diode' ? 1 : 20 });
+    else if (comp.kind === 'capacitor') {
+      const c = Math.max(comp.value, 1e-12);
+      const req = dt / c;
+      const vPrev = transientState.vCap[comp.id] || 0;
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: req });
+      iSources.push({ nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), current: -vPrev / req });
+    }
+    else if (comp.kind === 'inductor') {
+      const l = Math.max(comp.value, 1e-9);
+      const req = l / dt;
+      const iPrev = transientState.iInd[comp.id] || 0;
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: req });
+      iSources.push({ nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), current: iPrev });
+    }
   }
 
   const mnaRes = solveMNA({ nodeCount: nextNode, resistors, vSources, iSources, leds, relays });
@@ -140,34 +129,40 @@ export function solveCircuit(circuit, time = 0) {
     
     let u = 0, current = 0, isLit = false;
 
-    if (comp.kind === 'vcc') {
-      u = 5;
+    if (['and', 'or', 'nor', 'not'].includes(comp.kind)) {
+      const vIn1 = pinVoltages[pinKey(comp.id, 0)] ?? 0;
+      let outV = 0;
+      
+      if (comp.kind === 'not') {
+        outV = vIn1 < 2.5 ? 5 : 0;
+        u = pinVoltages[pinKey(comp.id, 1)] ?? 0;
+      } else {
+        const vIn2 = pinVoltages[pinKey(comp.id, 1)] ?? 0;
+        const in1High = vIn1 > 2.5;
+        const in2High = vIn2 > 2.5;
+        if (comp.kind === 'and') outV = (in1High && in2High) ? 5 : 0;
+        else if (comp.kind === 'or') outV = (in1High || in2High) ? 5 : 0;
+        else if (comp.kind === 'nor') outV = !(in1High || in2High) ? 5 : 0;
+        u = pinVoltages[pinKey(comp.id, 2)] ?? 0;
+      }
+      
+      if (!isSameFrame) transientState.logicState[comp.id] = outV;
       current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
-    } else if (comp.kind === 'probe') {
-      u = pinVoltages[pinKey(comp.id, 0)] ?? 0;
-      current = u / 1e9;
-      isLit = u > 2.5; // Логічна 1
-    } else {
+    } 
+    else if (comp.kind === 'vcc') { u = 5; current = -(mnaRes.vSourceCurrents[comp.id] ?? 0); } 
+    else if (comp.kind === 'probe') { u = pinVoltages[pinKey(comp.id, 0)] ?? 0; current = u / 1e9; isLit = u > 2.5; } 
+    else {
       const v0 = pinVoltages[pinKey(comp.id, 0)] ?? 0, v1 = pinVoltages[pinKey(comp.id, 1)] ?? 0;
       u = v0 - v1;
 
       if (comp.kind === 'resistor') current = u / Math.max(comp.value, 1e-4);
       else if (comp.kind === 'switch') current = u / (comp.value === 1 ? 1e-4 : 1e9);
       else if (comp.kind === 'voltmeter') current = u / 1e9;
-      else if (comp.kind === 'battery' || comp.kind === 'ac_source') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
-      else if (comp.kind === 'clock') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
+      else if (comp.kind === 'battery' || comp.kind === 'ac_source' || comp.kind === 'clock') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
       else if (comp.kind === 'ammeter') current = mnaRes.vSourceCurrents[comp.id] ?? 0;
       else if (comp.kind === 'led' || comp.kind === 'diode') {
         const lState = mnaRes.ledStates[comp.id];
         if (lState) { current = lState.current; isLit = lState.isOpen && current >= 0.0005; }
-      } else if (comp.kind === 'relay') {
-        const rState = mnaRes.relayStates[comp.id];
-        isLit = rState ? rState.isClosed : false;
-        current = Math.abs(u) / 400; 
-      } else if (comp.kind === 'npn') {
-        const rState = mnaRes.relayStates[comp.id];
-        isLit = rState ? rState.isClosed : false;
-        current = 0; 
       } else if (comp.kind === 'capacitor') {
         const req = dt / Math.max(comp.value, 1e-12);
         current = u / req - (transientState.vCap[comp.id] || 0) / req;

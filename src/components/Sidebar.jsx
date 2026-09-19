@@ -75,6 +75,7 @@ export function Sidebar({ onShowToast, tutorialStep }) {
                         <button 
                           key={item.kind} 
                           onClick={() => handleAddComponent(item.kind)} 
+                          title={item.nameUk} 
                           className={`flex items-center space-x-2 p-1.5 rounded-lg border text-left transition-all ${
                             isTarget 
                               ? 'bg-sky-900/40 border-sky-400 ring-2 ring-sky-400/50 animate-pulse' 

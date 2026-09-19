@@ -231,6 +231,30 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.beginPath(); ctx.moveTo(-10, 5); ctx.lineTo(20, 20); ctx.stroke(); 
           ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(12, 20); ctx.lineTo(16, 13); ctx.closePath(); ctx.fillStyle = '#e2e8f0'; ctx.fill();
           ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; ctx.stroke(); 
+        } else if (comp.kind === 'and') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(-30, -10); ctx.lineTo(-20, -10); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(-30, 10); ctx.lineTo(-20, 10); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(30, 0); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(-20, -16); ctx.lineTo(-20, 16); ctx.lineTo(0, 16); 
+          ctx.arc(0, 0, 16, Math.PI/2, -Math.PI/2, true); ctx.lineTo(-20, -16); ctx.stroke();
+          ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px monospace'; ctx.fillText('&', -8, 4);
+        } else if (comp.kind === 'or' || comp.kind === 'nor') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(-30, -10); ctx.lineTo(-14, -10); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-30, 10); ctx.lineTo(-14, 10); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(comp.kind === 'nor' ? 24 : 20, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-20, -16); ctx.quadraticCurveTo(-10, 0, -20, 16); 
+          ctx.quadraticCurveTo(10, 16, 20, 0); ctx.quadraticCurveTo(10, -16, -20, -16); ctx.stroke();
+          ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px monospace'; ctx.fillText('1', -5, 4);
+          if (comp.kind === 'nor') { ctx.beginPath(); ctx.arc(22, 0, 3, 0, Math.PI*2); ctx.stroke(); }
+        } else if (comp.kind === 'not') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-14, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(12, 0); ctx.lineTo(-14, 14); ctx.closePath(); ctx.stroke();
+          ctx.beginPath(); ctx.arc(15, 0, 3, 0, Math.PI*2); ctx.stroke();
+          ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px monospace'; ctx.fillText('1', -5, 4);
         } else if (comp.kind === 'ground') {
           ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(-10, 6); ctx.lineTo(10, 6); ctx.moveTo(-4, 12); ctx.lineTo(4, 12); ctx.stroke();
         } else if (comp.kind === 'voltmeter' || comp.kind === 'ammeter') {
@@ -241,6 +265,16 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
         ctx.restore();
 
         ctx.save(); ctx.translate(comp.x, comp.y); ctx.font = '12px Archivo, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#94a3b8'; ctx.fillText(comp.label, 0, -28);
+        
+        if (comp.kind === 'switch' && comp.hotkey) {
+          ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f59e0b'; ctx.fillText(`[${comp.hotkey}]`, 0, 15);
+        }
+        if (activeResult.success && sim) {
+          ctx.font = '11px monospace';
+          if (comp.kind === 'voltmeter') { ctx.fillStyle = '#38bdf8'; ctx.fillText(formatVoltage(sim.voltage), 0, 32); } 
+          else if (comp.kind === 'ammeter') { ctx.fillStyle = '#34d399'; ctx.fillText(formatCurrent(sim.current), 0, 32); } 
+          else if ((comp.kind === 'relay' || comp.kind === 'npn') && sim.isLit) { ctx.fillStyle = '#34d399'; ctx.fillText(`Відкрито`, 0, 32); }
+        }
         ctx.restore();
       }
 
