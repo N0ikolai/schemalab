@@ -5,7 +5,7 @@ import { formatVoltage, formatCurrent, formatPower } from '../utils/formatters.j
 import { Oscilloscope } from './Oscilloscope.jsx';
 
 export function PropertiesPanel({ onShowToast }) {
-  const { circuit, setCircuit, selectedComponentId, setSelectedComponentId, solveResult } = useContext(CircuitContext);
+  const { circuit, setCircuit, selectedComponentId, setSelectedComponentId, selectedWireId, setSelectedWireId, solveResult } = useContext(CircuitContext);
 
   const handleRotateComponent = (id) => {
     setCircuit(prev => ({
@@ -23,15 +23,35 @@ export function PropertiesPanel({ onShowToast }) {
     onShowToast('Елемент видалено');
   };
 
+  const handleDeleteWire = (id) => {
+    setCircuit(prev => ({ ...prev, wires: prev.wires.filter(w => w.id !== id) }));
+    setSelectedWireId(null);
+    onShowToast('Провід видалено');
+  };
+
   const selectedComp = circuit.components.find(c => c.id === selectedComponentId);
   const selectedSim = selectedComp ? solveResult.components[selectedComp.id] : null;
   const hasACSource = circuit.components.some(c => c.kind === 'ac_source');
+  const selectedWire = circuit.wires.find(w => w.id === selectedWireId);
 
   return (
     <aside className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col h-full overflow-hidden select-none shrink-0">
       <div className="p-4 border-b border-slate-800 flex-1 overflow-y-auto space-y-4">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Властивості елемента</h2>
-        {selectedComp ? (
+        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Властивості</h2>
+        
+        {/* ПАНЕЛЬ ПРОВОДУ */}
+        {selectedWire ? (
+          <div className="space-y-3 text-xs bg-slate-950 p-3 rounded-lg border border-slate-700">
+            <div className="font-bold text-sky-400 mb-2">З'єднувальний провід</div>
+            <div className="text-slate-400 mb-4">Передає струм між елементами. Опір: 0.00001 Ом.</div>
+            <button 
+              onClick={() => handleDeleteWire(selectedWire.id)} 
+              className="w-full py-2 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold transition-colors"
+            >
+              Видалити провід
+            </button>
+          </div>
+        ) : selectedComp ? (
           <div className="space-y-3 text-xs">
             <div className="flex justify-between pb-2 border-b border-slate-800">
               <span className="text-slate-400">Тип:</span>
@@ -54,28 +74,15 @@ export function PropertiesPanel({ onShowToast }) {
             )}
 
             {selectedComp.kind === 'switch' && (
-              <>
-                <div className="flex justify-between items-center mb-1 border border-slate-700 p-2 rounded bg-slate-950">
-                  <label className="text-slate-400">Стан:</label>
-                  <button 
-                    onClick={() => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, value: c.value === 1 ? 0 : 1 } : c) }))}
-                    className={`px-4 py-1.5 rounded text-xs font-bold transition-colors ${selectedComp.value === 1 ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
-                  >
-                    {selectedComp.value === 1 ? 'ЗАМКНЕНО' : 'РОЗІМКНЕНО'}
-                  </button>
-                </div>
-                <div className="flex justify-between items-center mb-1 border border-slate-700 p-2 rounded bg-slate-950">
-                  <label className="text-slate-400">Гаряча клавіша:</label>
-                  <input 
-                    type="text" 
-                    maxLength="1" 
-                    value={selectedComp.hotkey || ''} 
-                    onChange={(e) => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, hotkey: e.target.value.toUpperCase() } : c) }))} 
-                    className="w-10 bg-slate-800 border border-slate-600 rounded text-center text-sky-400 font-bold uppercase" 
-                    placeholder="—"
-                  />
-                </div>
-              </>
+              <div className="flex justify-between items-center mb-1 border border-slate-700 p-2 rounded bg-slate-950">
+                <label className="text-slate-400">Стан:</label>
+                <button 
+                  onClick={() => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, value: c.value === 1 ? 0 : 1 } : c) }))}
+                  className={`px-4 py-1.5 rounded text-xs font-bold transition-colors ${selectedComp.value === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300'}`}
+                >
+                  {selectedComp.value === 1 ? 'ЗАМКНЕНО' : 'РОЗІМКНЕНО'}
+                </button>
+              </div>
             )}
 
             {hasACSource && <Oscilloscope circuit={circuit} selectedCompId={selectedComp.id} />}
@@ -85,7 +92,6 @@ export function PropertiesPanel({ onShowToast }) {
                 <div className="text-[10px] uppercase font-bold text-slate-400">Показники:</div>
                 <div className="flex justify-between"><span className="text-slate-400">Напруга:</span><span className="font-mono font-bold text-sky-400">{formatVoltage(selectedSim.voltage)}</span></div>
                 <div className="flex justify-between"><span className="text-slate-400">Струм:</span><span className="font-mono font-bold text-emerald-400">{formatCurrent(selectedSim.current)}</span></div>
-                <div className="flex justify-between"><span className="text-slate-400">Потужність:</span><span className="font-mono font-bold text-amber-400">{formatPower(selectedSim.power)}</span></div>
               </div>
             )}
 
@@ -95,7 +101,7 @@ export function PropertiesPanel({ onShowToast }) {
             </div>
           </div>
         ) : (
-          <div className="text-xs text-slate-500 italic py-6 text-center">Оберіть елемент на схемі</div>
+          <div className="text-xs text-slate-500 italic py-6 text-center">Оберіть елемент або провід на схемі</div>
         )}
       </div>
 

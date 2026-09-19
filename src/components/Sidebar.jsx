@@ -9,16 +9,14 @@ const CATEGORIES = [
   { id: 'measure', nameUk: 'Вимірювальні прилади' },
 ];
 
-export function Sidebar({ onShowToast }) {
+export function Sidebar({ onShowToast, tutorialStep }) {
   const { circuit, setCircuit, setSelectedComponentId, setSelectedWireId } = useContext(CircuitContext);
   
   const [openCategories, setOpenCategories] = useState({
     source: true, passive: true, logic: true, measure: true
   });
 
-  const toggleCategory = (id) => {
-    setOpenCategories(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  const toggleCategory = (id) => setOpenCategories(prev => ({ ...prev, [id]: !prev[id] }));
 
   const handleAddComponent = (kind) => {
     const meta = COMPONENT_CATALOG[kind];
@@ -55,16 +53,33 @@ export function Sidebar({ onShowToast }) {
               
               {openCategories[cat.id] && (
                 <div className="grid grid-cols-2 gap-2 pl-1">
-                  {Object.values(COMPONENT_CATALOG).filter(c => c.category === cat.id).map(item => (
-                    <button key={item.kind} onClick={() => handleAddComponent(item.kind)} className="flex items-center space-x-2 p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-sky-500/50 text-left transition-all">
-                      <div className="w-6 h-6 rounded bg-slate-700 flex items-center justify-center text-sky-400 text-xs font-bold font-mono shrink-0">
-                        {item.defaultLabelPrefix[0]}
-                      </div>
-                      <div className="overflow-hidden">
-                        <div className="text-[11px] font-medium text-slate-200 truncate leading-tight">{item.nameUk}</div>
-                      </div>
-                    </button>
-                  ))}
+                  {Object.values(COMPONENT_CATALOG).filter(c => c.category === cat.id).map(item => {
+                    
+                    const isTarget = 
+                      (tutorialStep === 1 && item.kind === 'battery') ||
+                      (tutorialStep === 2 && item.kind === 'resistor') ||
+                      (tutorialStep === 3 && item.kind === 'led') ||
+                      (tutorialStep === 4 && item.kind === 'ground');
+
+                    return (
+                      <button 
+                        key={item.kind} 
+                        onClick={() => handleAddComponent(item.kind)} 
+                        className={`flex items-center space-x-2 p-1.5 rounded-lg border text-left transition-all ${
+                          isTarget 
+                            ? 'bg-sky-900/40 border-sky-400 ring-2 ring-sky-400/50 animate-pulse' 
+                            : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 hover:border-sky-500/50'
+                        }`}
+                      >
+                        <div className="w-6 h-6 rounded bg-slate-700 flex items-center justify-center text-sky-400 text-xs font-bold font-mono shrink-0">
+                          {item.defaultLabelPrefix[0]}
+                        </div>
+                        <div className="overflow-hidden">
+                          <div className="text-[11px] font-medium text-slate-200 truncate leading-tight">{item.nameUk}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
