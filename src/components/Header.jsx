@@ -54,7 +54,7 @@ export function Header({ onShowToast, onStartTutorial }) {
           setCircuit(importedCircuit);
           setSelectedComponentId(null);
           setSelectedWireId(null);
-          resetSimulation();
+          resetSimulation(); 
           onShowToast('Схему успішно завантажено', 'success');
         } else {
           onShowToast('Помилка: невірний формат файлу схеми', 'error');

@@ -1,9 +1,11 @@
 import { useContext } from 'react';
 import { CircuitContext } from '../context/CircuitContext.jsx';
 import { COMPONENT_CATALOG } from '../constants/componentCatalog.js';
+import { Oscilloscope } from './Oscilloscope.jsx';
+import { formatVoltage, formatCurrent } from '../utils/formatters.js';
 
 export function PropertiesPanel({ onShowToast }) {
-  const { circuit, setCircuit, selectedComponentId, selectedWireId, setSelectedComponentId, setSelectedWireId } = useContext(CircuitContext);
+  const { circuit, setCircuit, selectedComponentId, selectedWireId, setSelectedComponentId, setSelectedWireId, solveResult } = useContext(CircuitContext);
 
   const selectedComponent = circuit.components.find(c => c.id === selectedComponentId);
   const selectedWire = circuit.wires.find(w => w.id === selectedWireId);
@@ -89,6 +91,27 @@ export function PropertiesPanel({ onShowToast }) {
               className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500" 
             />
           </div>
+          
+          {selectedComponent.kind !== 'ground' && (
+            <div className="pt-2">
+              <div className="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Графік напруги (Live):</div>
+              <Oscilloscope circuit={circuit} selectedCompId={selectedComponent.id} />
+            </div>
+          )}
+
+          {solveResult?.success && solveResult.components[selectedComponent.id] && (
+            <div className="bg-slate-950 rounded-lg p-3 border border-slate-800 space-y-1.5">
+              <div className="text-[10px] uppercase font-bold text-slate-400">Показники (Останній знімок):</div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Напруга:</span>
+                <span className="font-mono font-bold text-sky-400">{formatVoltage(solveResult.components[selectedComponent.id].voltage)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Струм:</span>
+                <span className="font-mono font-bold text-emerald-400">{formatCurrent(solveResult.components[selectedComponent.id].current)}</span>
+              </div>
+            </div>
+          )}
 
           {meta.defaultValue !== undefined && selectedComponent.kind !== 'switch' && (
             <div>
@@ -116,7 +139,37 @@ export function PropertiesPanel({ onShowToast }) {
                       ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30' 
                       : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                   }`}
-                >
+                >{/* Налаштування кількості входов для вентилів І та ІЛИ */}
+          {['and', 'or'].includes(selectedComponent.kind) && (
+            <div>
+              <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Кількість входів</label>
+              <select 
+                value={selectedComponent.inputsCount || 2}
+                onChange={(e) => {
+                  const cnt = parseInt(e.target.value);
+                  setCircuit(prev => ({
+                    ...prev,
+                    components: prev.components.map(c => {
+                      if (c.id !== selectedComponent.id) return c;
+                      // Генеруємо нові піни залежно від кількості входів
+                      const newPins = [];
+                      for(let i = 0; i < cnt; i++) {
+                        const yPos = -15 + (30 / (cnt - 1 || 1)) * i;
+                        newPins.push({ index: i, x: -30, y: yPos, label: `IN${i+1}` });
+                      }
+                      newPins.push({ index: cnt, x: 30, y: 0, label: 'OUT' });
+                      return { ...c, inputsCount: cnt, pins: newPins };
+                    })
+                  }));
+                }}
+                className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+              >
+                <option value={2}>2 входи</option>
+                <option value={3}>3 входи</option>
+                <option value={4}>4 входи</option>
+              </select>
+            </div>
+          )}
                   {selectedComponent.value === 1 ? '🟢 ЗАМКНЕНО (ON)' : '🔴 РОЗІМКНЕНО (OFF)'}
                 </button>
               </div>
@@ -134,6 +187,7 @@ export function PropertiesPanel({ onShowToast }) {
               </div>
             </>
           )}
+
 
           <div className="pt-2 text-[11px] text-slate-400 bg-slate-800/40 p-2.5 rounded border border-slate-800">
             {meta.descriptionUk}
