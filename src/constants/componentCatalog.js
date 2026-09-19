@@ -31,6 +31,16 @@ export const COMPONENT_CATALOG = {
     pins: [{ index: 0, x: 0, y: -20, label: 'GND' }],
     descriptionUk: 'Опорний нульовий потенціал схеми (0 В)',
   },
+  vcc: {
+    category: 'logic', kind: 'vcc', nameUk: 'Логічна 1 (+Vcc)', defaultLabelPrefix: 'VCC', defaultValue: 5, unit: 'В',
+    pins: [{ index: 0, x: 0, y: 20, label: 'OUT' }],
+    descriptionUk: 'Джерело стабільних 5В для цифрових схем',
+  },
+  clock: {
+    category: 'logic', kind: 'clock', nameUk: 'Тактовий генератор', defaultLabelPrefix: 'CLK', defaultValue: 1, unit: 'Гц',
+    pins: [{ index: 0, x: 0, y: -20, label: '+' }, { index: 1, x: 0, y: 20, label: '-' }],
+    descriptionUk: 'Генератор прямокутних імпульсів (меандр 0..5В)',
+  },
   switch: {
     category: 'logic', kind: 'switch', nameUk: 'Вимикач', defaultLabelPrefix: 'SW', defaultValue: 0, unit: '',
     pins: [{ index: 0, x: -30, y: 0, label: '1' }, { index: 1, x: 30, y: 0, label: '2' }],
@@ -52,7 +62,7 @@ export const COMPONENT_CATALOG = {
       { index: 0, x: -20, y: -20, label: 'C+' }, { index: 1, x: -20, y: 20, label: 'C-' },
       { index: 2, x: 20, y: -20, label: 'SW1' }, { index: 3, x: 20, y: 20, label: 'SW2' }
     ],
-    descriptionUk: 'Електромагнітне реле. Замикає контакти SW, якщо напруга на котушці C >= номіналу.',
+    descriptionUk: 'Електромагнітне реле. Замикає контакти SW.',
   },
   npn: {
     category: 'logic', kind: 'npn', nameUk: 'NPN Транзистор', defaultLabelPrefix: 'Q', defaultValue: 100, unit: 'hFE',
@@ -62,6 +72,11 @@ export const COMPONENT_CATALOG = {
       { index: 2, x: 20, y: 20, label: 'E' }  
     ],
     descriptionUk: 'Біполярний транзистор (цифрова макромодель ключового режиму)',
+  },
+  probe: {
+    category: 'measure', kind: 'probe', nameUk: 'Логічний пробник', defaultLabelPrefix: 'PRB', defaultValue: 0, unit: '',
+    pins: [{ index: 0, x: -20, y: 0, label: 'IN' }],
+    descriptionUk: 'Реагує на логічні рівні (світиться при U > 2.5В)',
   },
   voltmeter: {
     category: 'measure', kind: 'voltmeter', nameUk: 'Вольтметр', defaultLabelPrefix: 'VM', defaultValue: 0, unit: 'В',

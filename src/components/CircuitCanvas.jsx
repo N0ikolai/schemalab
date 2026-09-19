@@ -182,6 +182,24 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(30, 0); ctx.stroke();
           ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(-10, 0); ctx.bezierCurveTo(-5, -12, -5, 12, 0, 0); ctx.bezierCurveTo(5, -12, 5, 12, 10, 0); ctx.stroke();
+        } else if (comp.kind === 'clock') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(0, -20); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, 16); ctx.lineTo(0, 20); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-8, 6); ctx.lineTo(-8, -6); ctx.lineTo(0, -6); ctx.lineTo(0, 6); ctx.lineTo(8, 6); ctx.stroke();
+        } else if (comp.kind === 'vcc') {
+          ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.moveTo(-12, 0); ctx.lineTo(12, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 20); ctx.stroke();
+          ctx.fillStyle = '#ef4444'; ctx.font = 'bold 12px monospace'; ctx.fillText('+Vcc', 0, -10);
+        } else if (comp.kind === 'probe') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(-12, 0); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2);
+          if (sim?.isLit) { ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 15; } else { ctx.fillStyle = '#1e293b'; }
+          ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+          if (sim?.isLit) { ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace'; ctx.fillText('1', 0, 4); }
+          else { ctx.fillStyle = '#64748b'; ctx.font = 'bold 14px monospace'; ctx.fillText('0', 0, 4); }
         } else if (comp.kind === 'switch') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-12, 0);
           if (comp.value === 1) ctx.lineTo(12, 0); else ctx.lineTo(12, -14);
@@ -194,8 +212,31 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           if (comp.kind === 'led' && sim?.isLit) { ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 20; } else { ctx.fillStyle = '#1e293b'; }
           ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
           ctx.beginPath(); ctx.moveTo(12, -14); ctx.lineTo(12, 14); ctx.lineWidth = 2.5; ctx.stroke();
+        } else if (comp.kind === 'relay') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.rect(-24, -14, 12, 28); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(-20, -20); ctx.lineTo(-20, -14); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-20, 14); ctx.lineTo(-20, 20); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(20, -20); ctx.lineTo(20, -10); ctx.stroke(); ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(20, 10); ctx.stroke();
+          ctx.beginPath(); ctx.arc(20, -10, 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(20, 10, 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.beginPath();
+          if (sim?.isLit) { ctx.moveTo(20, -8); ctx.lineTo(20, 8); ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3; } else { ctx.moveTo(20, -8); ctx.lineTo(10, 5); }
+          ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-12, 0); ctx.lineTo(15, 0); ctx.setLineDash([3, 3]); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+        } else if (comp.kind === 'npn') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(-10, 0); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(-10, -15); ctx.lineTo(-10, 15); ctx.lineWidth = 3; ctx.stroke(); 
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(-10, -5); ctx.lineTo(20, -20); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(-10, 5); ctx.lineTo(20, 20); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(12, 20); ctx.lineTo(16, 13); ctx.closePath(); ctx.fillStyle = '#e2e8f0'; ctx.fill();
+          ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; ctx.stroke(); 
         } else if (comp.kind === 'ground') {
           ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(-10, 6); ctx.lineTo(10, 6); ctx.moveTo(-4, 12); ctx.lineTo(4, 12); ctx.stroke();
+        } else if (comp.kind === 'voltmeter' || comp.kind === 'ammeter') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-18, 0); ctx.moveTo(18, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(comp.kind === 'voltmeter' ? 'V' : 'A', 0, 1);
         }
         ctx.restore();
 
@@ -212,10 +253,9 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.fillStyle = isStart ? '#38bdf8' : isHov ? '#f59e0b' : '#64748b'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.fill(); ctx.stroke();
         }
       }
-      
+
       const drawTutorialHint = (p1, p2, timeOffset = 0) => {
         const tTime = time + timeOffset;
-        
         const pulse = (Math.sin(tTime / 150) + 1) * 3;
         ctx.beginPath(); ctx.arc(p1.x, p1.y, 8 + pulse, 0, Math.PI*2);
         ctx.strokeStyle = 'rgba(56, 189, 248, 0.9)'; ctx.lineWidth = 2; ctx.stroke();
@@ -226,8 +266,8 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
         ctx.setLineDash([8, 8]); ctx.lineDashOffset = -(tTime / 20); ctx.stroke(); ctx.setLineDash([]);
 
         let t = (tTime % 2000) / 2000;
-        let animT = t < 0.2 ? 0 : t > 0.8 ? 1 : (t - 0.2) / 0.6; // Паузи на кінцях
-        animT = animT * animT * (3 - 2 * animT); // Згладжування руху
+        let animT = t < 0.2 ? 0 : t > 0.8 ? 1 : (t - 0.2) / 0.6; 
+        animT = animT * animT * (3 - 2 * animT); 
         
         const cx = p1.x + (p2.x - p1.x) * animT;
         const cy = p1.y + (p2.y - p1.y) * animT;

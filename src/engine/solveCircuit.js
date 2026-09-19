@@ -70,35 +70,60 @@ export function solveCircuit(circuit, time = 0) {
   }
 
   for (const comp of components) {
-    if (comp.kind === 'resistor') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: Math.max(comp.value, 1e-4) });
-    else if (comp.kind === 'switch') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: comp.value === 1 ? 1e-4 : 1e9 });
-    else if (comp.kind === 'voltmeter') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: 1e9 });
-    else if (comp.kind === 'battery') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: comp.value });
-    else if (comp.kind === 'ac_source') {
-      const acVoltage = comp.value * Math.sin(2 * Math.PI * 1 * time);
-      vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: acVoltage });
-    }
-    else if (comp.kind === 'ammeter') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: 0 });
-    else if (comp.kind === 'led' || comp.kind === 'diode') leds.push({ id: comp.id, nodeAnode: getPinNode(comp, 0), nodeCathode: getPinNode(comp, 1), vf: Math.max(comp.value, 0.1), rs: comp.kind === 'diode' ? 1 : 20 });
-    else if (comp.kind === 'relay') relays.push({ id: comp.id, nodeCoilPos: getPinNode(comp, 0), nodeCoilNeg: getPinNode(comp, 1), nodeSw1: getPinNode(comp, 2), nodeSw2: getPinNode(comp, 3), vOn: Math.max(comp.value, 0.1) });
-    else if (comp.kind === 'npn') {
-      leds.push({ id: `${comp.id}_be`, nodeAnode: getPinNode(comp, 0), nodeCathode: getPinNode(comp, 2), vf: 0.7, rs: 100 });
-      relays.push({ id: comp.id, nodeCoilPos: getPinNode(comp, 0), nodeCoilNeg: getPinNode(comp, 2), nodeSw1: getPinNode(comp, 1), nodeSw2: getPinNode(comp, 2), vOn: 0.65 });
-    }
-    else if (comp.kind === 'capacitor') {
-      const c = Math.max(comp.value, 1e-12);
-      const req = dt / c;
-      const vPrev = transientState.vCap[comp.id] || 0;
-      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: req });
-      iSources.push({ nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), current: -vPrev / req });
-    }
-    else if (comp.kind === 'inductor') {
-      const l = Math.max(comp.value, 1e-9);
-      const req = l / dt;
-      const iPrev = transientState.iInd[comp.id] || 0;
-      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: req });
-      iSources.push({ nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), current: iPrev });
-    }
+   if (comp.kind === 'resistor') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-18, 0); ctx.lineTo(-14, -10); ctx.lineTo(-8, 10); ctx.lineTo(-2, -10); ctx.lineTo(4, 10); ctx.lineTo(10, -10); ctx.lineTo(14, 10); ctx.lineTo(18, 0); ctx.lineTo(30, 0); ctx.stroke();
+        } else if (comp.kind === 'capacitor') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-4, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(-4, 12); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(4, -12); ctx.lineTo(4, 12); ctx.stroke();
+        } else if (comp.kind === 'inductor') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-15, 0);
+          ctx.bezierCurveTo(-15, -12, -5, -12, -5, 0); ctx.bezierCurveTo(-5, -12, 5, -12, 5, 0); ctx.bezierCurveTo(5, -12, 15, -12, 15, 0);
+          ctx.lineTo(30, 0); ctx.stroke();
+        } else if (comp.kind === 'battery') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-8, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-8, -18); ctx.lineTo(-8, 18); ctx.lineWidth = 3; ctx.strokeStyle = '#38bdf8'; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(8, 10); ctx.lineWidth = 5; ctx.strokeStyle = '#ef4444'; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(30, 0); ctx.lineWidth = 2.2; ctx.strokeStyle = '#e2e8f0'; ctx.stroke();
+        } else if (comp.kind === 'ac_source') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-16, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-10, 0); ctx.bezierCurveTo(-5, -12, -5, 12, 0, 0); ctx.bezierCurveTo(5, -12, 5, 12, 10, 0); ctx.stroke();
+        } else if (comp.kind === 'clock') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(0, -20); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, 16); ctx.lineTo(0, 20); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-8, 6); ctx.lineTo(-8, -6); ctx.lineTo(0, -6); ctx.lineTo(0, 6); ctx.lineTo(8, 6); ctx.stroke();
+        } else if (comp.kind === 'vcc') {
+          ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.moveTo(-12, 0); ctx.lineTo(12, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 20); ctx.stroke();
+          ctx.fillStyle = '#ef4444'; ctx.font = 'bold 12px monospace'; ctx.fillText('+Vcc', 0, -10);
+        } else if (comp.kind === 'probe') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(-12, 0); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2);
+          if (sim?.isLit) { ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 15; } else { ctx.fillStyle = '#1e293b'; }
+          ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+          if (sim?.isLit) { ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace'; ctx.fillText('1', 0, 4); }
+          else { ctx.fillStyle = '#64748b'; ctx.font = 'bold 14px monospace'; ctx.fillText('0', 0, 4); }
+        } else if (comp.kind === 'switch') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-12, 0);
+          if (comp.value === 1) ctx.lineTo(12, 0); else ctx.lineTo(12, -14);
+          ctx.moveTo(12, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(-12, 0, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.beginPath(); ctx.arc(12, 0, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        } else if (comp.kind === 'diode' || comp.kind === 'led') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-12, 0); ctx.moveTo(12, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-12, -14); ctx.lineTo(12, 0); ctx.lineTo(-12, 14); ctx.closePath();
+          if (comp.kind === 'led' && sim?.isLit) { ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 20; } else { ctx.fillStyle = '#1e293b'; }
+          ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+          ctx.beginPath(); ctx.moveTo(12, -14); ctx.lineTo(12, 14); ctx.lineWidth = 2.5; ctx.stroke();
+        } else if (comp.kind === 'ground') {
+          ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(-10, 6); ctx.lineTo(10, 6); ctx.moveTo(-4, 12); ctx.lineTo(4, 12); ctx.stroke();
+        }
   }
 
   const mnaRes = solveMNA({ nodeCount: nextNode, resistors, vSources, iSources, leds, relays });
@@ -112,34 +137,46 @@ export function solveCircuit(circuit, time = 0) {
 
   for (const comp of components) {
     if (comp.kind === 'ground') { compResults[comp.id] = { voltage: 0, current: 0, power: 0 }; continue; }
-    const v0 = pinVoltages[pinKey(comp.id, 0)] ?? 0, v1 = pinVoltages[pinKey(comp.id, 1)] ?? 0;
-    const u = v0 - v1;
-    let current = 0, isLit = false;
+    
+    let u = 0, current = 0, isLit = false;
 
-    if (comp.kind === 'resistor') current = u / Math.max(comp.value, 1e-4);
-    else if (comp.kind === 'switch') current = u / (comp.value === 1 ? 1e-4 : 1e9);
-    else if (comp.kind === 'voltmeter') current = u / 1e9;
-    else if (comp.kind === 'battery' || comp.kind === 'ac_source') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
-    else if (comp.kind === 'ammeter') current = mnaRes.vSourceCurrents[comp.id] ?? 0;
-    else if (comp.kind === 'led' || comp.kind === 'diode') {
-      const lState = mnaRes.ledStates[comp.id];
-      if (lState) { current = lState.current; isLit = lState.isOpen && current >= 0.0005; }
-    } else if (comp.kind === 'relay') {
-      const rState = mnaRes.relayStates[comp.id];
-      isLit = rState ? rState.isClosed : false;
-      current = Math.abs(u) / 400; 
-    } else if (comp.kind === 'npn') {
-      const rState = mnaRes.relayStates[comp.id];
-      isLit = rState ? rState.isClosed : false;
-      current = 0; 
-    } else if (comp.kind === 'capacitor') {
-      const req = dt / Math.max(comp.value, 1e-12);
-      current = u / req - (transientState.vCap[comp.id] || 0) / req;
-      if (!isSameFrame) transientState.vCap[comp.id] = u;
-    } else if (comp.kind === 'inductor') {
-      const req = Math.max(comp.value, 1e-9) / dt;
-      current = u / req + (transientState.iInd[comp.id] || 0);
-      if (!isSameFrame) transientState.iInd[comp.id] = current;
+    if (comp.kind === 'vcc') {
+      u = 5;
+      current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
+    } else if (comp.kind === 'probe') {
+      u = pinVoltages[pinKey(comp.id, 0)] ?? 0;
+      current = u / 1e9;
+      isLit = u > 2.5; // Логічна 1
+    } else {
+      const v0 = pinVoltages[pinKey(comp.id, 0)] ?? 0, v1 = pinVoltages[pinKey(comp.id, 1)] ?? 0;
+      u = v0 - v1;
+
+      if (comp.kind === 'resistor') current = u / Math.max(comp.value, 1e-4);
+      else if (comp.kind === 'switch') current = u / (comp.value === 1 ? 1e-4 : 1e9);
+      else if (comp.kind === 'voltmeter') current = u / 1e9;
+      else if (comp.kind === 'battery' || comp.kind === 'ac_source') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
+      else if (comp.kind === 'clock') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
+      else if (comp.kind === 'ammeter') current = mnaRes.vSourceCurrents[comp.id] ?? 0;
+      else if (comp.kind === 'led' || comp.kind === 'diode') {
+        const lState = mnaRes.ledStates[comp.id];
+        if (lState) { current = lState.current; isLit = lState.isOpen && current >= 0.0005; }
+      } else if (comp.kind === 'relay') {
+        const rState = mnaRes.relayStates[comp.id];
+        isLit = rState ? rState.isClosed : false;
+        current = Math.abs(u) / 400; 
+      } else if (comp.kind === 'npn') {
+        const rState = mnaRes.relayStates[comp.id];
+        isLit = rState ? rState.isClosed : false;
+        current = 0; 
+      } else if (comp.kind === 'capacitor') {
+        const req = dt / Math.max(comp.value, 1e-12);
+        current = u / req - (transientState.vCap[comp.id] || 0) / req;
+        if (!isSameFrame) transientState.vCap[comp.id] = u;
+      } else if (comp.kind === 'inductor') {
+        const req = Math.max(comp.value, 1e-9) / dt;
+        current = u / req + (transientState.iInd[comp.id] || 0);
+        if (!isSameFrame) transientState.iInd[comp.id] = current;
+      }
     }
 
     if (Math.abs(current) > 1e4) shortCircuit = true;
