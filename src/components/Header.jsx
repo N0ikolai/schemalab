@@ -1,7 +1,8 @@
 import { useContext } from 'react';
 import { CircuitContext } from '../context/CircuitContext.jsx';
+import { resetSimulation } from '../engine/solveCircuit.js';
 
-export function Header({ onShowToast }) {
+export function Header({ onShowToast, onStartTutorial }) {
   const { setCircuit, setSelectedComponentId, setSelectedWireId } = useContext(CircuitContext);
 
   const handleClear = () => {
@@ -9,8 +10,14 @@ export function Header({ onShowToast }) {
       setCircuit({ components: [], wires: [] });
       setSelectedComponentId(null);
       setSelectedWireId(null);
+      resetSimulation(); 
       onShowToast('Поле очищено', 'success');
     }
+  };
+
+  const handleResetTime = () => {
+    resetSimulation();
+    onShowToast('Перехідні процеси скинуто', 'success');
   };
 
   return (
@@ -22,6 +29,18 @@ export function Header({ onShowToast }) {
         <h1 className="text-lg font-bold text-slate-100 tracking-wide">СхемаЛаб</h1>
       </div>
       <div className="flex items-center space-x-3">
+        <button 
+          onClick={handleResetTime}
+          className="px-4 py-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 rounded border border-emerald-400/30 transition-colors"
+        >
+          🔄 Скинути час
+        </button>
+        <button 
+          onClick={onStartTutorial}
+          className="px-4 py-1.5 text-xs font-bold text-sky-400 bg-sky-400/10 hover:bg-sky-400/20 rounded border border-sky-400/30 transition-colors"
+        >
+          🎓 Навчання
+        </button>
         <button 
           onClick={handleClear}
           className="px-4 py-1.5 text-xs font-medium text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 rounded border border-rose-400/20 transition-colors"

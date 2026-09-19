@@ -5,20 +5,25 @@ import { getPinWorldPosition } from '../utils/geometry.js';
 
 function pinKey(cid, pidx) { return `${cid}:${pidx}`; }
 
-// Глобальна пам'ять для реактивних елементів
 const transientState = { time: 0, lastDt: 0.016, vCap: {}, iInd: {} };
+
+export function resetSimulation() {
+  transientState.time = 0;
+  transientState.lastDt = 0.016;
+  transientState.vCap = {};
+  transientState.iInd = {};
+}
 
 export function solveCircuit(circuit, time = 0) {
   const { components, wires } = circuit;
   if (components.length === 0) return { success: true, nodeVoltages: {}, pinVoltages: {}, components: {}, wires: {} };
 
-  // Захист від подвійного виклику в межах одного кадру (Canvas + Осцилограф)
   const isSameFrame = Math.abs(time - transientState.time) < 0.0001;
   let dt = time - transientState.time;
   if (isSameFrame) { dt = transientState.lastDt; } 
   else {
     if (dt <= 0) dt = 0.016;
-    if (dt > 0.05) dt = 0.016; // Запобіжник від вибуху симуляції при лагах браузера
+    if (dt > 0.05) dt = 0.016;
   }
 
   const ds = new DisjointSet();
@@ -130,11 +135,11 @@ export function solveCircuit(circuit, time = 0) {
     } else if (comp.kind === 'capacitor') {
       const req = dt / Math.max(comp.value, 1e-12);
       current = u / req - (transientState.vCap[comp.id] || 0) / req;
-      if (!isSameFrame) transientState.vCap[comp.id] = u; // Оновлюємо стан конденсатора
+      if (!isSameFrame) transientState.vCap[comp.id] = u;
     } else if (comp.kind === 'inductor') {
       const req = Math.max(comp.value, 1e-9) / dt;
       current = u / req + (transientState.iInd[comp.id] || 0);
-      if (!isSameFrame) transientState.iInd[comp.id] = current; // Оновлюємо стан котушки
+      if (!isSameFrame) transientState.iInd[comp.id] = current;
     }
 
     if (Math.abs(current) > 1e4) shortCircuit = true;

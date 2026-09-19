@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { CircuitContext } from '../context/CircuitContext.jsx';
 import { COMPONENT_CATALOG } from '../constants/componentCatalog.js';
-import { formatVoltage, formatCurrent, formatPower } from '../utils/formatters.js';
+import { formatVoltage, formatCurrent } from '../utils/formatters.js';
 import { Oscilloscope } from './Oscilloscope.jsx';
 
 export function PropertiesPanel({ onShowToast }) {
@@ -31,7 +31,6 @@ export function PropertiesPanel({ onShowToast }) {
 
   const selectedComp = circuit.components.find(c => c.id === selectedComponentId);
   const selectedSim = selectedComp ? solveResult.components[selectedComp.id] : null;
-  const hasACSource = circuit.components.some(c => c.kind === 'ac_source');
   const selectedWire = circuit.wires.find(w => w.id === selectedWireId);
 
   return (
@@ -39,7 +38,6 @@ export function PropertiesPanel({ onShowToast }) {
       <div className="p-4 border-b border-slate-800 flex-1 overflow-y-auto space-y-4">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Властивості</h2>
         
-        {/* ПАНЕЛЬ ПРОВОДУ */}
         {selectedWire ? (
           <div className="space-y-3 text-xs bg-slate-950 p-3 rounded-lg border border-slate-700">
             <div className="font-bold text-sky-400 mb-2">З'єднувальний провід</div>
@@ -85,11 +83,18 @@ export function PropertiesPanel({ onShowToast }) {
               </div>
             )}
 
-            {hasACSource && <Oscilloscope circuit={circuit} selectedCompId={selectedComp.id} />}
+            {selectedComp.kind !== 'ground' && (
+              <div className="pt-2">
+                <div className="text-[10px] uppercase font-bold text-slate-400 mb-1.5 flex justify-between items-center">
+                  <span>Графік напруги (Live):</span>
+                </div>
+                <Oscilloscope circuit={circuit} selectedCompId={selectedComp.id} />
+              </div>
+            )}
 
-            {selectedSim && solveResult.success && !hasACSource && (
-              <div className="bg-slate-950 rounded-lg p-3 border border-slate-800 space-y-1.5">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Показники:</div>
+            {selectedSim && solveResult.success && (
+              <div className="bg-slate-950 rounded-lg p-3 border border-slate-800 space-y-1.5 mt-2">
+                <div className="text-[10px] uppercase font-bold text-slate-400">Показники (Останній знімок):</div>
                 <div className="flex justify-between"><span className="text-slate-400">Напруга:</span><span className="font-mono font-bold text-sky-400">{formatVoltage(selectedSim.voltage)}</span></div>
                 <div className="flex justify-between"><span className="text-slate-400">Струм:</span><span className="font-mono font-bold text-emerald-400">{formatCurrent(selectedSim.current)}</span></div>
               </div>
