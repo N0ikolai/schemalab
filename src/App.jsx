@@ -24,7 +24,7 @@ export default function App() {
           <Sidebar onShowToast={showToast} tutorialStep={tutorialStep} />
           
           <main className="flex-1 relative">
-            <CircuitCanvas onShowToast={showToast} />
+            <CircuitCanvas onShowToast={showToast} tutorialStep={tutorialStep} />
             
             {tutorialStep > 0 && (
               <Tutorial 

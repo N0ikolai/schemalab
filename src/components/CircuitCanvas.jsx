@@ -15,7 +15,7 @@ const distToSegmentSquared = (p, v, w) => {
   return (p.x - (v.x + t * (w.x - v.x)))**2 + (p.y - (v.y + t * (w.y - v.y)))**2;
 };
 
-export function CircuitCanvas({ onShowToast }) {
+export function CircuitCanvas({ onShowToast, tutorialStep }) {
   const { circuit, setCircuit, tool, selectedComponentId, setSelectedComponentId, selectedWireId, setSelectedWireId, solveResult } = useContext(CircuitContext);
   const canvasRef = useRef(null);
   const [transform, setTransform] = useState({ scale: 1, offsetX: 60, offsetY: 60 });
@@ -63,14 +63,8 @@ export function CircuitCanvas({ onShowToast }) {
       if (!cA || !cB) continue;
       const p1 = getPinWorldPosition(cA, wire.from.pinIndex);
       const p2 = getPinWorldPosition(cB, wire.to.pinIndex);
-      
-      // Провід малюється як p1 -> pMid -> p2 (кутом)
       const pMid = { x: p2.x, y: p1.y };
-
-      // Перевіряємо клік по горизонтальному АБО вертикальному відрізку проводу
-      if (distToSegmentSquared(pt, p1, pMid) <= 64 || distToSegmentSquared(pt, pMid, p2) <= 64) {
-        return wire;
-      }
+      if (distToSegmentSquared(pt, p1, pMid) <= 64 || distToSegmentSquared(pt, pMid, p2) <= 64) return wire;
     }
     return null;
   };
@@ -219,13 +213,57 @@ export function CircuitCanvas({ onShowToast }) {
         }
       }
       
+      const drawTutorialHint = (p1, p2, timeOffset = 0) => {
+        const tTime = time + timeOffset;
+        
+        const pulse = (Math.sin(tTime / 150) + 1) * 3;
+        ctx.beginPath(); ctx.arc(p1.x, p1.y, 8 + pulse, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.9)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.arc(p2.x, p2.y, 8 + pulse, 0, Math.PI*2); ctx.stroke();
+
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; ctx.lineWidth = 4;
+        ctx.setLineDash([8, 8]); ctx.lineDashOffset = -(tTime / 20); ctx.stroke(); ctx.setLineDash([]);
+
+        let t = (tTime % 2000) / 2000;
+        let animT = t < 0.2 ? 0 : t > 0.8 ? 1 : (t - 0.2) / 0.6; // Паузи на кінцях
+        animT = animT * animT * (3 - 2 * animT); // Згладжування руху
+        
+        const cx = p1.x + (p2.x - p1.x) * animT;
+        const cy = p1.y + (p2.y - p1.y) * animT;
+        
+        ctx.beginPath(); 
+        ctx.moveTo(cx, cy); ctx.lineTo(cx + 14, cy + 14); ctx.lineTo(cx + 5, cy + 17); ctx.lineTo(cx, cy + 24); 
+        ctx.closePath();
+        ctx.fillStyle = '#ffffff'; ctx.fill(); 
+        ctx.strokeStyle = '#000000'; ctx.lineWidth = 1; ctx.stroke();
+      };
+
+      if (tutorialStep === 3) {
+        const bat = circuit.components.find(c => c.kind === 'battery');
+        const res = circuit.components.find(c => c.kind === 'resistor');
+        if (bat && res) drawTutorialHint(getPinWorldPosition(bat, 0), getPinWorldPosition(res, 0));
+      } else if (tutorialStep === 5) {
+        const res = circuit.components.find(c => c.kind === 'resistor');
+        const led = circuit.components.find(c => c.kind === 'led');
+        if (res && led) drawTutorialHint(getPinWorldPosition(res, 1), getPinWorldPosition(led, 0));
+      } else if (tutorialStep === 7) {
+        const bat = circuit.components.find(c => c.kind === 'battery');
+        const led = circuit.components.find(c => c.kind === 'led');
+        const gnd = circuit.components.find(c => c.kind === 'ground');
+        if (bat && gnd && led) {
+          drawTutorialHint(getPinWorldPosition(bat, 1), getPinWorldPosition(gnd, 0));
+          drawTutorialHint(getPinWorldPosition(led, 1), getPinWorldPosition(gnd, 0), 1000);
+        }
+      }
+
       ctx.restore(); ctx.restore();
       animationFrameId = requestAnimationFrame(render);
     };
 
     animationFrameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [circuit, solveResult, transform, selectedComponentId, selectedWireId, hoveredPin, wireStartPin, mouseWorldPos]);
+  }, [circuit, solveResult, transform, selectedComponentId, selectedWireId, hoveredPin, wireStartPin, mouseWorldPos, tutorialStep]);
 
   const onMouseDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect(), mouseX = e.clientX - rect.left, mouseY = e.clientY - rect.top, worldPos = screenToWorld(mouseX, mouseY);
