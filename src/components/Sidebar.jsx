@@ -36,54 +36,65 @@ export function Sidebar({ onShowToast, tutorialStep }) {
     onShowToast(`Додано: ${meta.nameUk} (${label})`);
   };
 
+  let targetKind = null;
+  if (tutorialStep === 1) targetKind = 'battery';
+  if (tutorialStep === 2) targetKind = 'resistor';
+  if (tutorialStep === 4) targetKind = 'led';
+  if (tutorialStep === 6) targetKind = 'ground';
+  
+  const targetCategory = targetKind ? COMPONENT_CATALOG[targetKind].category : null;
+
   return (
     <aside className="w-72 bg-slate-900 border-r border-slate-800 flex flex-col h-full overflow-hidden select-none shrink-0">
       <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Палітра компонентів</h2>
         <div className="space-y-4">
-          {CATEGORIES.map(cat => (
-            <div key={cat.id} className="space-y-2">
-              <button 
-                onClick={() => toggleCategory(cat.id)}
-                className="w-full flex items-center justify-between text-xs font-bold text-slate-300 hover:text-sky-400 bg-slate-800/40 p-2 rounded transition-colors"
-              >
-                <span>{cat.nameUk}</span>
-                <span className="text-[10px] text-slate-500">{openCategories[cat.id] ? '▼' : '▶'}</span>
-              </button>
-              
-              {openCategories[cat.id] && (
-                <div className="grid grid-cols-2 gap-2 pl-1">
-                  {Object.values(COMPONENT_CATALOG).filter(c => c.category === cat.id).map(item => {
-                    
-                    const isTarget = 
-                      (tutorialStep === 1 && item.kind === 'battery') ||
-                      (tutorialStep === 2 && item.kind === 'resistor') ||
-                      (tutorialStep === 3 && item.kind === 'led') ||
-                      (tutorialStep === 4 && item.kind === 'ground');
+          {CATEGORIES.map(cat => {
+            const isTargetCat = targetCategory === cat.id;
+            const needsToOpen = isTargetCat && !openCategories[cat.id];
 
-                    return (
-                      <button 
-                        key={item.kind} 
-                        onClick={() => handleAddComponent(item.kind)} 
-                        className={`flex items-center space-x-2 p-1.5 rounded-lg border text-left transition-all ${
-                          isTarget 
-                            ? 'bg-sky-900/40 border-sky-400 ring-2 ring-sky-400/50 animate-pulse' 
-                            : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 hover:border-sky-500/50'
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded bg-slate-700 flex items-center justify-center text-sky-400 text-xs font-bold font-mono shrink-0">
-                          {item.defaultLabelPrefix[0]}
-                        </div>
-                        <div className="overflow-hidden">
-                          <div className="text-[11px] font-medium text-slate-200 truncate leading-tight">{item.nameUk}</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          ))}
+            return (
+              <div key={cat.id} className="space-y-2">
+                <button 
+                  onClick={() => toggleCategory(cat.id)}
+                  className={`w-full flex items-center justify-between text-xs font-bold p-2 rounded transition-colors ${
+                    needsToOpen 
+                      ? 'bg-sky-900/60 text-sky-400 ring-2 ring-sky-400/50 animate-pulse'
+                      : 'text-slate-300 hover:text-sky-400 bg-slate-800/40'
+                  }`}
+                >
+                  <span>{cat.nameUk}</span>
+                  <span className="text-[10px] text-slate-500">{openCategories[cat.id] ? '▼' : '▶'}</span>
+                </button>
+                
+                {openCategories[cat.id] && (
+                  <div className="grid grid-cols-2 gap-2 pl-1">
+                    {Object.values(COMPONENT_CATALOG).filter(c => c.category === cat.id).map(item => {
+                      const isTarget = targetKind === item.kind;
+                      return (
+                        <button 
+                          key={item.kind} 
+                          onClick={() => handleAddComponent(item.kind)} 
+                          className={`flex items-center space-x-2 p-1.5 rounded-lg border text-left transition-all ${
+                            isTarget 
+                              ? 'bg-sky-900/40 border-sky-400 ring-2 ring-sky-400/50 animate-pulse' 
+                              : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 hover:border-sky-500/50'
+                          }`}
+                        >
+                          <div className="w-6 h-6 rounded bg-slate-700 flex items-center justify-center text-sky-400 text-xs font-bold font-mono shrink-0">
+                            {item.defaultLabelPrefix[0]}
+                          </div>
+                          <div className="overflow-hidden">
+                            <div className="text-[11px] font-medium text-slate-200 truncate leading-tight">{item.nameUk}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </aside>

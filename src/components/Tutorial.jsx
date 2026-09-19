@@ -5,33 +5,45 @@ export function Tutorial({ step, setStep, onClose }) {
   const { circuit, solveResult } = useContext(CircuitContext);
 
   useEffect(() => {
-    const hasBattery = circuit.components.some(c => c.kind === 'battery');
-    const hasResistor = circuit.components.some(c => c.kind === 'resistor');
-    const hasLed = circuit.components.some(c => c.kind === 'led');
-    const hasGround = circuit.components.some(c => c.kind === 'ground');
+    const bat = circuit.components.find(c => c.kind === 'battery');
+    const res = circuit.components.find(c => c.kind === 'resistor');
+    const led = circuit.components.find(c => c.kind === 'led');
+    const gnd = circuit.components.find(c => c.kind === 'ground');
+
+    const checkWire = (c1, c2) => {
+      if (!c1 || !c2) return false;
+      return circuit.wires.some(w => 
+        (w.from.componentId === c1.id && w.to.componentId === c2.id) || 
+        (w.from.componentId === c2.id && w.to.componentId === c1.id)
+      );
+    };
+
+    const batResWired = checkWire(bat, res);
+    const resLedWired = checkWire(res, led);
     
     let isLit = false;
-    if (solveResult && solveResult.success) {
-      const led = circuit.components.find(c => c.kind === 'led');
-      if (led && solveResult.components[led.id] && solveResult.components[led.id].isLit) {
-        isLit = true;
-      }
+    if (solveResult && solveResult.success && led && solveResult.components[led.id]?.isLit) {
+      isLit = true;
     }
 
-    if (step === 1 && hasBattery) setStep(2);
-    if (step === 2 && hasResistor) setStep(3);
-    if (step === 3 && hasLed) setStep(4);
-    if (step === 4 && hasGround) setStep(5);
-    if (step === 5 && isLit) setStep(6);
+    if (step === 1 && bat) setStep(2);
+    if (step === 2 && res) setStep(3);
+    if (step === 3 && batResWired) setStep(4);
+    if (step === 4 && led) setStep(5);
+    if (step === 5 && resLedWired) setStep(6);
+    if (step === 6 && gnd) setStep(7);
+    if (step === 7 && isLit) setStep(8);
   }, [circuit, solveResult, step, setStep]);
 
   const stepsText = {
-    1: "Крок 1: Давай зберемо схему! Зліва в меню знайди і натисни на Джерело DC (Батарея). Кнопка підсвічується!",
-    2: "Крок 2: Відмінно. Тепер додай Резистор. Він потрібен, щоб наш діод не згорів від напруги.",
-    3: "Крок 3: Тепер додай Світлодіод. Він знаходиться в категорії «Логіка».",
-    4: "Крок 4: Залишилася Земля (GND). Це найважливіший елемент. Без неї симулятор не зможе рахувати струм.",
-    5: "Крок 5: Час з'єднати деталі!\n👉 Натисни на кружечок плюса батареї, а потім на контакт резистора.\n👉 З'єднай все ланцюгом: Батарея(+) → Резистор → Діод(А).\n👉 Всі мінуси (вільні контакти) з'єднай із Землею.",
-    6: "Вітаємо! Діод засвітився, струм пішов! Ти навчився збирати схеми. 🎉"
+    1: "Крок 1: Зберемо першу схему! Натисни на «Джерело DC» (Батарею) зліва в меню, щоб додати її на поле.",
+    2: "Крок 2: Відмінно. Тепер додай «Резистор». Він потрібен, щоб наш діод не згорів від напруги.",
+    3: "Крок 3: З'єднаємо їх! У батареї червона лінія — це Плюс (+), а синя — Мінус (-). Протягни провід від Плюса батареї до контакту резистора.",
+    4: "Крок 4: Чудово. Тепер додай «Світлодіод» (він знаходиться в категорії «Логіка»).",
+    5: "Крок 5: Протягни провід від другого контакту резистора до Плюса (А) світлодіода.",
+    6: "Крок 6: Залишилася «Земля (GND)». Без неї симулятор не зрозуміє, куди текти струму.",
+    7: "Крок 7: Замкни ланцюг! Протягни проводи від Мінуса (синя лінія) батареї та Мінуса (К) діода до Землі.",
+    8: "Вітаємо! Діод засвітився, струм пішов! Тепер ти розумієш логіку створення схем. 🎉"
   };
 
   return (
@@ -47,14 +59,14 @@ export function Tutorial({ step, setStep, onClose }) {
         {stepsText[step]}
       </div>
       
-      {!solveResult?.success && circuit.components.length > 0 && step === 5 && (
+      {!solveResult?.success && circuit.components.length > 0 && step === 7 && (
         <div className="mb-4 p-2 bg-rose-500/10 border border-rose-500/30 rounded text-rose-400 text-xs font-bold animate-pulse">
           ⚠️ Помилка: {solveResult?.errorMessageUk || "Перевірте правильність з'єднань"}
         </div>
       )}
       
-      <div className="flex space-x-2">
-        {[1, 2, 3, 4, 5, 6].map(i => (
+      <div className="flex space-x-1.5">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
           <div 
             key={i} 
             className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
@@ -66,7 +78,7 @@ export function Tutorial({ step, setStep, onClose }) {
         ))}
       </div>
 
-      {step === 6 && (
+      {step === 8 && (
         <button onClick={onClose} className="mt-5 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-xs transition-colors tracking-wide">
           ЗАВЕРШИТИ НАВЧАННЯ
         </button>
