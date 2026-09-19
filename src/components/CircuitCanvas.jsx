@@ -127,15 +127,18 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
         ctx.strokeStyle = wire.id === selectedWireId ? '#f59e0b' : (activeResult.success ? getVoltageColor(pot) : '#475569'); 
         ctx.stroke();
 
-        if (activeResult.success && activeResult.wires) {
-          const wireSim = activeResult.wires[wire.id];
-          if (wireSim && Math.abs(wireSim.current) > 1e-4) {
+        // ОНОВЛЕНА АНІМАЦІЯ ДЛЯ ЛОГІЧНИХ СИГНАЛІВ ТА СТРУМУ
+        if (activeResult.success) {
+          const potA = activeResult.pinVoltages[pinKey(wire.from.componentId, wire.from.pinIndex)] || 0;
+          const potB = activeResult.pinVoltages[pinKey(wire.to.componentId, wire.to.pinIndex)] || 0;
+          const wireSim = activeResult.wires?.[wire.id];
+          const currentVal = wireSim ? Math.abs(wireSim.current) : 0;
+
+          if (Math.abs(potA) > 1 || Math.abs(potB) > 1 || currentVal > 1e-5) {
             ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p1.y); ctx.lineTo(p2.x, p2.y);
             ctx.lineWidth = 2.5; ctx.strokeStyle = '#fde047'; ctx.setLineDash([4, 10]);
-            let speed = Math.abs(wireSim.current) * 10;
-            if (speed < 1) speed = 1; if (speed > 8) speed = 8;
-            const direction = wireSim.current > 0 ? -1 : 1; 
-            ctx.lineDashOffset = (time / 30 * speed * direction) % 14;
+            const speed = 4;
+            ctx.lineDashOffset = (time / 30 * speed) % 14;
             ctx.stroke(); ctx.setLineDash([]);
           }
         }
@@ -231,18 +234,62 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.beginPath(); ctx.moveTo(-10, 5); ctx.lineTo(20, 20); ctx.stroke(); 
           ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(12, 20); ctx.lineTo(16, 13); ctx.closePath(); ctx.fillStyle = '#e2e8f0'; ctx.fill();
           ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; ctx.stroke(); 
-        } else if (comp.kind === 'and') {
+        } else if (comp.kind === 'jk_ff') {
           ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.moveTo(-30, -10); ctx.lineTo(-20, -10); ctx.stroke(); 
-          ctx.beginPath(); ctx.moveTo(-30, 10); ctx.lineTo(-20, 10); ctx.stroke(); 
+          ctx.beginPath(); ctx.rect(-20, -30, 40, 60); ctx.stroke(); 
+          
+          ctx.beginPath(); ctx.moveTo(-30, -20); ctx.lineTo(-20, -20); ctx.stroke(); 
+          ctx.fillStyle = '#64748b'; ctx.font = '10px monospace'; ctx.fillText('J', -12, -17);
+          
+          ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-20, 0); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(-20, -4); ctx.lineTo(-14, 0); ctx.lineTo(-20, 4); ctx.stroke(); 
+          
+          ctx.beginPath(); ctx.moveTo(-30, 20); ctx.lineTo(-20, 20); ctx.stroke(); 
+          ctx.fillText('K', -12, 23);
+          
+          ctx.beginPath(); ctx.moveTo(20, -20); ctx.lineTo(30, -20); ctx.stroke(); 
+          ctx.fillText('Q', 12, -17);
+          
+          ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(30, 20); ctx.stroke(); 
+          ctx.beginPath(); ctx.arc(23, 20, 3, 0, Math.PI*2); ctx.stroke(); 
+          ctx.fillText('Q', 10, 23);
+        }else if (comp.kind === 'adder') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.rect(-20, -30, 40, 60); ctx.stroke(); 
+          
+          ctx.beginPath(); ctx.moveTo(-30, -20); ctx.lineTo(-20, -20); ctx.stroke(); // A
+          ctx.fillStyle = '#64748b'; ctx.font = '10px monospace'; ctx.fillText('A', -12, -17);
+          
+          ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-20, 0); ctx.stroke(); // B
+          ctx.fillText('B', -12, 3);
+          
+          ctx.beginPath(); ctx.moveTo(-30, 20); ctx.lineTo(-20, 20); ctx.stroke(); // Cin
+          ctx.font = '9px monospace'; ctx.fillText('Cin', -8, 23);
+          
+          ctx.beginPath(); ctx.moveTo(20, -10); ctx.lineTo(30, -10); ctx.stroke(); // S
+          ctx.font = '10px monospace'; ctx.fillText('S', 12, -7);
+          
+          ctx.beginPath(); ctx.moveTo(20, 10); ctx.lineTo(30, 10); ctx.stroke(); // Cout
+          ctx.fillText('C', 12, 13);
+        }
+        else if (comp.kind === 'and') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          const inCount = comp.inputsCount || 2;
+          for (let i = 0; i < inCount; i++) {
+            const yPos = -15 + (30 / (inCount - 1 || 1)) * i;
+            ctx.beginPath(); ctx.moveTo(-30, yPos); ctx.lineTo(-20, yPos); ctx.stroke();
+          }
           ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(30, 0); ctx.stroke(); 
           ctx.beginPath(); ctx.moveTo(-20, -16); ctx.lineTo(-20, 16); ctx.lineTo(0, 16); 
           ctx.arc(0, 0, 16, Math.PI/2, -Math.PI/2, true); ctx.lineTo(-20, -16); ctx.stroke();
           ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px monospace'; ctx.fillText('&', -8, 4);
         } else if (comp.kind === 'or' || comp.kind === 'nor') {
           ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.moveTo(-30, -10); ctx.lineTo(-14, -10); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(-30, 10); ctx.lineTo(-14, 10); ctx.stroke();
+          const inCount = comp.inputsCount || 2;
+          for (let i = 0; i < inCount; i++) {
+            const yPos = -15 + (30 / (inCount - 1 || 1)) * i;
+            ctx.beginPath(); ctx.moveTo(-30, yPos); ctx.lineTo(-14, yPos); ctx.stroke();
+          }
           ctx.beginPath(); ctx.moveTo(comp.kind === 'nor' ? 24 : 20, 0); ctx.lineTo(30, 0); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(-20, -16); ctx.quadraticCurveTo(-10, 0, -20, 16); 
           ctx.quadraticCurveTo(10, 16, 20, 0); ctx.quadraticCurveTo(10, -16, -20, -16); ctx.stroke();

@@ -36,6 +36,28 @@ export const COMPONENT_CATALOG = {
     pins: [{ index: 0, x: 0, y: 20, label: 'OUT' }],
     descriptionUk: 'Джерело стабільних 5В для цифрових схем',
   },
+  jk_ff: {
+    category: 'logic', kind: 'jk_ff', nameUk: 'JK-тригер', defaultLabelPrefix: 'JK', defaultValue: 0, unit: '',
+    pins: [
+      { index: 0, x: -30, y: -20, label: 'J' },
+      { index: 1, x: -30, y: 0, label: 'C' },
+      { index: 2, x: -30, y: 20, label: 'K' },
+      { index: 3, x: 30, y: -20, label: 'Q' },
+      { index: 4, x: 30, y: 20, label: '!Q' }
+    ],
+    descriptionUk: 'Синхронний JK-тригер. Змінює стан по передньому фронту (0 -> 1) на вході C.',
+  },
+  adder: {
+    category: 'logic', kind: 'adder', nameUk: 'Повний суматор', defaultLabelPrefix: 'ADD', defaultValue: 0, unit: '',
+    pins: [
+      { index: 0, x: -30, y: -20, label: 'A' },
+      { index: 1, x: -30, y: 0, label: 'B' },
+      { index: 2, x: -30, y: 20, label: 'Cin' },
+      { index: 3, x: 30, y: -10, label: 'S' },
+      { index: 4, x: 30, y: 10, label: 'Cout' }
+    ],
+    descriptionUk: 'Двійковий повний суматор. Додає A, B та вхідний переніс (Cin). Видає суму (S) та переніс (Cout).',
+  },
   clock: {
     category: 'logic', kind: 'clock', nameUk: 'Тактовий генератор', defaultLabelPrefix: 'CLK', defaultValue: 1, unit: 'Гц',
     pins: [{ index: 0, x: 0, y: -20, label: '+' }, { index: 1, x: 0, y: 20, label: '-' }],

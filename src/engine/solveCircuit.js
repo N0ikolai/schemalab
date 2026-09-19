@@ -77,14 +77,32 @@ export function solveCircuit(circuit, time = 0) {
     else if (comp.kind === 'probe') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); 
     else if (comp.kind === 'vcc') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: -1, voltage: 5 }); 
     else if (['and', 'or', 'nor'].includes(comp.kind)) {
-      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); // Вхід 1 (високий опір)
-      resistors.push({ nodeA: getPinNode(comp, 1), nodeB: -1, resistance: 1e9 }); // Вхід 2 (високий опір)
+      const inCount = comp.inputsCount || 2;
+      for (let i = 0; i < inCount; i++) {
+        resistors.push({ nodeA: getPinNode(comp, i), nodeB: -1, resistance: 1e9 });
+      }
       const outV = transientState.logicState[comp.id] ?? 0;
-      vSources.push({ id: comp.id, nodePos: getPinNode(comp, 2), nodeNeg: -1, voltage: outV }); // Вихід (джерело напруги)
+      vSources.push({ id: comp.id, nodePos: getPinNode(comp, inCount), nodeNeg: -1, voltage: outV });
+    }
+    else if (comp.kind === 'jk_ff') {
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); 
+      resistors.push({ nodeA: getPinNode(comp, 1), nodeB: -1, resistance: 1e9 }); 
+      resistors.push({ nodeA: getPinNode(comp, 2), nodeB: -1, resistance: 1e9 }); 
+      const state = transientState.logicState[comp.id] || { q: 0, lastClock: false };
+      vSources.push({ id: `${comp.id}_Q`, nodePos: getPinNode(comp, 3), nodeNeg: -1, voltage: state.q ? 5 : 0 });
+      vSources.push({ id: `${comp.id}_Qinv`, nodePos: getPinNode(comp, 4), nodeNeg: -1, voltage: state.q ? 0 : 5 });
+    }
+    else if (comp.kind === 'adder') {
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); 
+      resistors.push({ nodeA: getPinNode(comp, 1), nodeB: -1, resistance: 1e9 }); 
+      resistors.push({ nodeA: getPinNode(comp, 2), nodeB: -1, resistance: 1e9 }); 
+      const state = transientState.logicState[comp.id] || { s: 0, cout: 0 };
+      vSources.push({ id: `${comp.id}_S`, nodePos: getPinNode(comp, 3), nodeNeg: -1, voltage: state.s ? 5 : 0 });
+      vSources.push({ id: `${comp.id}_Cout`, nodePos: getPinNode(comp, 4), nodeNeg: -1, voltage: state.cout ? 5 : 0 });
     }
     else if (comp.kind === 'not') {
       resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 });
-      const outV = transientState.logicState[comp.id] ?? 5; // НЕ за замовчуванням видає 1
+      const outV = transientState.logicState[comp.id] ?? 5; 
       vSources.push({ id: comp.id, nodePos: getPinNode(comp, 1), nodeNeg: -1, voltage: outV });
     }
     else if (comp.kind === 'battery') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: comp.value });
@@ -137,18 +155,58 @@ export function solveCircuit(circuit, time = 0) {
         outV = vIn1 < 2.5 ? 5 : 0;
         u = pinVoltages[pinKey(comp.id, 1)] ?? 0;
       } else {
-        const vIn2 = pinVoltages[pinKey(comp.id, 1)] ?? 0;
-        const in1High = vIn1 > 2.5;
-        const in2High = vIn2 > 2.5;
-        if (comp.kind === 'and') outV = (in1High && in2High) ? 5 : 0;
-        else if (comp.kind === 'or') outV = (in1High || in2High) ? 5 : 0;
-        else if (comp.kind === 'nor') outV = !(in1High || in2High) ? 5 : 0;
-        u = pinVoltages[pinKey(comp.id, 2)] ?? 0;
+        const inCount = comp.inputsCount || 2;
+        let allHigh = true;
+        let anyHigh = false;
+        
+        for (let i = 0; i < inCount; i++) {
+          const vIn = pinVoltages[pinKey(comp.id, i)] ?? 0;
+          if (vIn > 2.5) anyHigh = true;
+          else allHigh = false;
+        }
+        
+        if (comp.kind === 'and') outV = allHigh ? 5 : 0;
+        else if (comp.kind === 'or') outV = anyHigh ? 5 : 0;
+        else if (comp.kind === 'nor') outV = !anyHigh ? 5 : 0;
+        
+        u = pinVoltages[pinKey(comp.id, inCount)] ?? 0;
       }
       
       if (!isSameFrame) transientState.logicState[comp.id] = outV;
-      current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
+      current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);   
     } 
+    else if (comp.kind === 'jk_ff') {
+      const state = transientState.logicState[comp.id] || { q: 0, lastClock: false };
+      const isJ = (pinVoltages[pinKey(comp.id, 0)] ?? 0) > 2.5;
+      const isC = (pinVoltages[pinKey(comp.id, 1)] ?? 0) > 2.5;
+      const isK = (pinVoltages[pinKey(comp.id, 2)] ?? 0) > 2.5;
+
+      let nextQ = state.q;
+      
+      if (isC && !state.lastClock) {
+        if (isJ && !isK) nextQ = 1;        
+        else if (!isJ && isK) nextQ = 0;   
+        else if (isJ && isK) nextQ = state.q ? 0 : 1;
+      }
+      
+      if (!isSameFrame) transientState.logicState[comp.id] = { q: nextQ, lastClock: isC };
+      
+      u = 5; 
+      current = 0;
+    }
+    else if (comp.kind === 'adder') {
+      const a = (pinVoltages[pinKey(comp.id, 0)] ?? 0) > 2.5 ? 1 : 0;
+      const b = (pinVoltages[pinKey(comp.id, 1)] ?? 0) > 2.5 ? 1 : 0;
+      const cin = (pinVoltages[pinKey(comp.id, 2)] ?? 0) > 2.5 ? 1 : 0;
+
+      const sum = a ^ b ^ cin;
+      const cout = (a && b) || (cin && (a ^ b)) ? 1 : 0;
+      
+      if (!isSameFrame) transientState.logicState[comp.id] = { s: sum, cout: cout };
+      
+      u = 5; 
+      current = 0;
+    }
     else if (comp.kind === 'vcc') { u = 5; current = -(mnaRes.vSourceCurrents[comp.id] ?? 0); } 
     else if (comp.kind === 'probe') { u = pinVoltages[pinKey(comp.id, 0)] ?? 0; current = u / 1e9; isLit = u > 2.5; } 
     else {
