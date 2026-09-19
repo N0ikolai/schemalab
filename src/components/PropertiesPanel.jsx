@@ -1,125 +1,162 @@
 import { useContext } from 'react';
 import { CircuitContext } from '../context/CircuitContext.jsx';
 import { COMPONENT_CATALOG } from '../constants/componentCatalog.js';
-import { formatVoltage, formatCurrent } from '../utils/formatters.js';
-import { Oscilloscope } from './Oscilloscope.jsx';
 
 export function PropertiesPanel({ onShowToast }) {
-  const { circuit, setCircuit, selectedComponentId, setSelectedComponentId, selectedWireId, setSelectedWireId, solveResult } = useContext(CircuitContext);
+  const { circuit, setCircuit, selectedComponentId, selectedWireId, setSelectedComponentId, setSelectedWireId } = useContext(CircuitContext);
 
-  const handleRotateComponent = (id) => {
-    setCircuit(prev => ({
-      ...prev,
-      components: prev.components.map(c => c.id === id ? { ...c, rotation: (c.rotation + 90) % 360 } : c)
-    }));
-  };
-
-  const handleDeleteComponent = (id) => {
-    setCircuit(prev => ({
-      components: prev.components.filter(c => c.id !== id),
-      wires: prev.wires.filter(w => w.from.componentId !== id && w.to.componentId !== id)
-    }));
-    if (selectedComponentId === id) setSelectedComponentId(null);
-    onShowToast('Елемент видалено');
-  };
-
-  const handleDeleteWire = (id) => {
-    setCircuit(prev => ({ ...prev, wires: prev.wires.filter(w => w.id !== id) }));
-    setSelectedWireId(null);
-    onShowToast('Провід видалено');
-  };
-
-  const selectedComp = circuit.components.find(c => c.id === selectedComponentId);
-  const selectedSim = selectedComp ? solveResult.components[selectedComp.id] : null;
+  const selectedComponent = circuit.components.find(c => c.id === selectedComponentId);
   const selectedWire = circuit.wires.find(w => w.id === selectedWireId);
 
+  if (!selectedComponent && !selectedWire) {
+    return (
+      <aside className="w-80 bg-slate-900 border-l border-slate-800 p-4 text-slate-400 text-xs shrink-0 select-none">
+        <h2 className="font-bold text-slate-300 uppercase tracking-wider mb-2">Властивості</h2>
+        <p className="text-slate-500 italic">Оберіть елемент або провід на схемі</p>
+      </aside>
+    );
+  }
+
+  const meta = selectedComponent ? COMPONENT_CATALOG[selectedComponent.kind] : null;
+
+  const handleValueChange = (e) => {
+    const val = parseFloat(e.target.value);
+    if (isNaN(val)) return;
+    setCircuit(prev => ({
+      ...prev,
+      components: prev.components.map(c => c.id === selectedComponent.id ? { ...c, value: val } : c)
+    }));
+  };
+
+  const handleLabelChange = (e) => {
+    const newLabel = e.target.value;
+    setCircuit(prev => ({
+      ...prev,
+      components: prev.components.map(c => c.id === selectedComponent.id ? { ...c, label: newLabel } : c)
+    }));
+  };
+
+  const handleHotkeyChange = (e) => {
+    const key = e.target.value.toUpperCase().slice(0, 1);
+    setCircuit(prev => ({
+      ...prev,
+      components: prev.components.map(c => c.id === selectedComponent.id ? { ...c, hotkey: key } : c)
+    }));
+  };
+
+  const handleDelete = () => {
+    if (selectedComponentId) {
+      setCircuit(prev => ({
+        components: prev.components.filter(c => c.id !== selectedComponentId),
+        wires: prev.wires.filter(w => w.from.componentId !== selectedComponentId && w.to.componentId !== selectedComponentId)
+      }));
+      setSelectedComponentId(null);
+      onShowToast('Елемент видалено');
+    } else if (selectedWireId) {
+      setCircuit(prev => ({
+        ...prev,
+        wires: prev.wires.filter(w => w.id !== selectedWireId)
+      }));
+      setSelectedWireId(null);
+      onShowToast('Провід видалено');
+    }
+  };
+
+  const handleToggleSwitch = () => {
+    setCircuit(prev => ({
+      ...prev,
+      components: prev.components.map(c => c.id === selectedComponent.id ? { ...c, value: c.value === 1 ? 0 : 1 } : c)
+    }));
+  };
+
   return (
-    <aside className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col h-full overflow-hidden select-none shrink-0">
-      <div className="p-4 border-b border-slate-800 flex-1 overflow-y-auto space-y-4">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Властивості</h2>
-        
-        {selectedWire ? (
-          <div className="space-y-3 text-xs bg-slate-950 p-3 rounded-lg border border-slate-700">
-            <div className="font-bold text-sky-400 mb-2">З'єднувальний провід</div>
-            <div className="text-slate-400 mb-4">Передає струм між елементами. Опір: 0.00001 Ом.</div>
-            <button 
-              onClick={() => handleDeleteWire(selectedWire.id)} 
-              className="w-full py-2 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold transition-colors"
-            >
-              Видалити провід
-            </button>
+    <aside className="w-80 bg-slate-900 border-l border-slate-800 p-4 flex flex-col h-full shrink-0 select-none">
+      <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4">Властивості</h2>
+
+      {selectedComponent && meta && (
+        <div className="space-y-4 flex-1 overflow-y-auto">
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Тип елемента</label>
+            <div className="text-sm font-bold text-sky-400">{meta.nameUk}</div>
           </div>
-        ) : selectedComp ? (
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between pb-2 border-b border-slate-800">
-              <span className="text-slate-400">Тип:</span>
-              <span className="font-bold text-sky-400">{COMPONENT_CATALOG[selectedComp.kind].nameUk}</span>
-            </div>
-            
+
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Назва (Маркування)</label>
+            <input 
+              type="text" 
+              value={selectedComponent.label} 
+              onChange={handleLabelChange}
+              className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500" 
+            />
+          </div>
+
+          {meta.defaultValue !== undefined && selectedComponent.kind !== 'switch' && (
             <div>
-              <label className="block text-slate-400 mb-1">Позначення:</label>
-              <input type="text" value={selectedComp.label} onChange={(e) => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, label: e.target.value } : c) }))} className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 font-mono text-slate-100" />
+              <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">
+                Номінал ({meta.unit})
+              </label>
+              <input 
+                type="number" 
+                step="any" 
+                value={selectedComponent.value} 
+                onChange={handleValueChange}
+                className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500" 
+              />
             </div>
+          )}
 
-            {selectedComp.kind !== 'ground' && selectedComp.kind !== 'voltmeter' && selectedComp.kind !== 'ammeter' && selectedComp.kind !== 'switch' && selectedComp.kind !== 'npn' && selectedComp.kind !== 'relay' && selectedComp.kind !== 'diode' && (
+          {selectedComponent.kind === 'switch' && (
+            <>
               <div>
-                <div className="flex justify-between mb-1">
-                  <label className="text-slate-400">Номінал ({COMPONENT_CATALOG[selectedComp.kind].unit}):</label>
-                  <span className="font-mono font-bold text-sky-400">{selectedComp.value}</span>
-                </div>
-                <input type="number" min="0.01" step={selectedComp.kind === 'led' ? '0.1' : '1'} value={selectedComp.value} onChange={(e) => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, value: parseFloat(e.target.value) || 0 } : c) }))} className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 font-mono text-slate-100" />
-              </div>
-            )}
-
-            {selectedComp.kind === 'switch' && (
-              <div className="flex justify-between items-center mb-1 border border-slate-700 p-2 rounded bg-slate-950">
-                <label className="text-slate-400">Стан:</label>
+                <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Стан вимикача</label>
                 <button 
-                  onClick={() => setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComp.id ? { ...c, value: c.value === 1 ? 0 : 1 } : c) }))}
-                  className={`px-4 py-1.5 rounded text-xs font-bold transition-colors ${selectedComp.value === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300'}`}
+                  onClick={handleToggleSwitch}
+                  className={`w-full py-2 px-3 rounded text-xs font-bold border transition-colors ${
+                    selectedComponent.value === 1 
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30' 
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                  }`}
                 >
-                  {selectedComp.value === 1 ? 'ЗАМКНЕНО' : 'РОЗІМКНЕНО'}
+                  {selectedComponent.value === 1 ? '🟢 ЗАМКНЕНО (ON)' : '🔴 РОЗІМКНЕНО (OFF)'}
                 </button>
               </div>
-            )}
 
-            {selectedComp.kind !== 'ground' && (
-              <div className="pt-2">
-                <div className="text-[10px] uppercase font-bold text-slate-400 mb-1.5 flex justify-between items-center">
-                  <span>Графік напруги (Live):</span>
-                </div>
-                <Oscilloscope circuit={circuit} selectedCompId={selectedComp.id} />
+              <div>
+                <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Клавіша керування на клавіатурі</label>
+                <input 
+                  type="text" 
+                  maxLength={1}
+                  value={selectedComponent.hotkey || ''} 
+                  onChange={handleHotkeyChange}
+                  placeholder="Наприклад: S"
+                  className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-amber-400 font-bold uppercase text-center focus:outline-none focus:border-sky-500" 
+                />
               </div>
-            )}
+            </>
+          )}
 
-            {selectedSim && solveResult.success && (
-              <div className="bg-slate-950 rounded-lg p-3 border border-slate-800 space-y-1.5 mt-2">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Показники (Останній знімок):</div>
-                <div className="flex justify-between"><span className="text-slate-400">Напруга:</span><span className="font-mono font-bold text-sky-400">{formatVoltage(selectedSim.voltage)}</span></div>
-                <div className="flex justify-between"><span className="text-slate-400">Струм:</span><span className="font-mono font-bold text-emerald-400">{formatCurrent(selectedSim.current)}</span></div>
-              </div>
-            )}
-
-            <div className="flex space-x-2 pt-2">
-              <button onClick={() => handleRotateComponent(selectedComp.id)} className="flex-1 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700">Поворот (R)</button>
-              <button onClick={() => handleDeleteComponent(selectedComp.id)} className="px-3 py-1.5 rounded bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs border border-rose-900/50">Видалити</button>
-            </div>
+          <div className="pt-2 text-[11px] text-slate-400 bg-slate-800/40 p-2.5 rounded border border-slate-800">
+            {meta.descriptionUk}
           </div>
-        ) : (
-          <div className="text-xs text-slate-500 italic py-6 text-center">Оберіть елемент або провід на схемі</div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="p-4 bg-slate-950/40 border-t border-slate-800 shrink-0 text-xs space-y-1.5">
-        <div className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">Статус схеми</div>
-        {solveResult.success ? (
-          <>
-            <div className="text-emerald-400 flex items-center space-x-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /><span>Схему розв'язано успішно</span></div>
-            <div className="text-[11px] text-slate-400 flex justify-between"><span>Елементів: {circuit.components.length}</span><span>Провідників: {circuit.wires.length}</span></div>
-          </>
-        ) : (
-          <div className="text-rose-400 text-[11px]">{solveResult.errorMessageUk}</div>
-        )}
+      {selectedWire && (
+        <div className="space-y-4 flex-1">
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Об'єкт</label>
+            <div className="text-sm font-bold text-amber-400">З'єднувальний провід</div>
+          </div>
+        </div>
+      )}
+
+      <div className="pt-4 border-t border-slate-800 mt-auto">
+        <button 
+          onClick={handleDelete}
+          className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-xs font-bold transition-colors"
+        >
+          Видалити об'єкт
+        </button>
       </div>
     </aside>
   );
