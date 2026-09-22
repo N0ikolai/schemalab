@@ -36,7 +36,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
     if (v <= 2.5) return '#10b981';
     if (v <= 6) return '#eab308';
     if (v <= 12) return '#f97316';
-    return '#ef4444';
+    return '#159205';
   };
 
   const findPinAt = (wx, wy) => {
