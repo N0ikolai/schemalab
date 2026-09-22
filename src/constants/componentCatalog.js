@@ -16,6 +16,13 @@ export const COMPONENT_CATALOG = {
     pins: [{ index: 0, x: -30, y: 0, label: '1' }, { index: 1, x: 30, y: 0, label: '2' }],
     descriptionUk: 'Накопичує магнітну енергію (реактивний елемент)',
   },
+  node: {
+    category: 'passive', kind: 'node', nameUk: 'Вузол (згин)', defaultLabelPrefix: 'J', defaultValue: 0, unit: '',
+    pins: [
+      { index: 0, x: 0, y: 0, label: '' }
+    ],
+    descriptionUk: 'Допоміжна точка для ручного вигину та розгалуження проводів.',
+  },
   battery: {
     category: 'source', kind: 'battery', nameUk: 'Джерело DC', defaultLabelPrefix: 'V', defaultValue: 9, unit: 'В',
     pins: [{ index: 0, x: -30, y: 0, label: '+' }, { index: 1, x: 30, y: 0, label: '-' }],
@@ -46,6 +53,15 @@ export const COMPONENT_CATALOG = {
       { index: 4, x: 30, y: 20, label: '!Q' }
     ],
     descriptionUk: 'Синхронний JK-тригер. Змінює стан по передньому фронту (0 -> 1) на вході C.',
+  },
+  npn: {
+    category: 'logic', kind: 'npn', nameUk: 'Транзистор NPN', defaultLabelPrefix: 'Q', defaultValue: 0, unit: '',
+    pins: [
+      { index: 0, x: -20, y: 0, label: 'B' },
+      { index: 1, x: 20, y: -20, label: 'C' },
+      { index: 2, x: 20, y: 20, label: 'E' }
+    ],
+    descriptionUk: 'Біполярний NPN транзистор (База, Колектор, Емітер).',
   },
   adder: {
     category: 'logic', kind: 'adder', nameUk: 'Повний суматор', defaultLabelPrefix: 'ADD', defaultValue: 0, unit: '',

@@ -127,7 +127,6 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
         ctx.strokeStyle = wire.id === selectedWireId ? '#f59e0b' : (activeResult.success ? getVoltageColor(pot) : '#475569'); 
         ctx.stroke();
 
-        // ОНОВЛЕНА АНІМАЦІЯ ДЛЯ ЛОГІЧНИХ СИГНАЛІВ ТА СТРУМУ
         if (activeResult.success) {
           const potA = activeResult.pinVoltages[pinKey(wire.from.componentId, wire.from.pinIndex)] || 0;
           const potB = activeResult.pinVoltages[pinKey(wire.to.componentId, wire.to.pinIndex)] || 0;
@@ -253,7 +252,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(30, 20); ctx.stroke(); 
           ctx.beginPath(); ctx.arc(23, 20, 3, 0, Math.PI*2); ctx.stroke(); 
           ctx.fillText('Q', 10, 23);
-        }else if (comp.kind === 'adder') {
+        } else if (comp.kind === 'adder') {
           ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
           ctx.beginPath(); ctx.rect(-20, -30, 40, 60); ctx.stroke(); 
           
@@ -271,8 +270,11 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           
           ctx.beginPath(); ctx.moveTo(20, 10); ctx.lineTo(30, 10); ctx.stroke(); // Cout
           ctx.fillText('C', 12, 13);
-        }
-        else if (comp.kind === 'and') {
+        } else if (comp.kind === 'ground') {
+          ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(-10, 6); ctx.lineTo(10, 6); ctx.moveTo(-4, 12); ctx.lineTo(4, 12); ctx.stroke();
+        } else if (comp.kind === 'node') {
+          ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
+        } else if (comp.kind === 'and') {
           ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
           const inCount = comp.inputsCount || 2;
           for (let i = 0; i < inCount; i++) {
@@ -302,8 +304,6 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(12, 0); ctx.lineTo(-14, 14); ctx.closePath(); ctx.stroke();
           ctx.beginPath(); ctx.arc(15, 0, 3, 0, Math.PI*2); ctx.stroke();
           ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px monospace'; ctx.fillText('1', -5, 4);
-        } else if (comp.kind === 'ground') {
-          ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(-10, 6); ctx.lineTo(10, 6); ctx.moveTo(-4, 12); ctx.lineTo(4, 12); ctx.stroke();
         } else if (comp.kind === 'voltmeter' || comp.kind === 'ammeter') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-18, 0); ctx.moveTo(18, 0); ctx.lineTo(30, 0); ctx.stroke();
           ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -311,18 +311,20 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
         }
         ctx.restore();
 
-        ctx.save(); ctx.translate(comp.x, comp.y); ctx.font = '12px Archivo, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#94a3b8'; ctx.fillText(comp.label, 0, -28);
-        
-        if (comp.kind === 'switch' && comp.hotkey) {
-          ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f59e0b'; ctx.fillText(`[${comp.hotkey}]`, 0, 15);
+        if (comp.kind !== 'node') {
+          ctx.save(); ctx.translate(comp.x, comp.y); ctx.font = '12px Archivo, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#94a3b8'; ctx.fillText(comp.label, 0, -28);
+          
+          if (comp.kind === 'switch' && comp.hotkey) {
+            ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f59e0b'; ctx.fillText(`[${comp.hotkey}]`, 0, 15);
+          }
+          if (activeResult.success && sim) {
+            ctx.font = '11px monospace';
+            if (comp.kind === 'voltmeter') { ctx.fillStyle = '#38bdf8'; ctx.fillText(formatVoltage(sim.voltage), 0, 32); } 
+            else if (comp.kind === 'ammeter') { ctx.fillStyle = '#34d399'; ctx.fillText(formatCurrent(sim.current), 0, 32); } 
+            else if ((comp.kind === 'relay' || comp.kind === 'npn') && sim.isLit) { ctx.fillStyle = '#34d399'; ctx.fillText(`Відкрито`, 0, 32); }
+          }
+          ctx.restore();
         }
-        if (activeResult.success && sim) {
-          ctx.font = '11px monospace';
-          if (comp.kind === 'voltmeter') { ctx.fillStyle = '#38bdf8'; ctx.fillText(formatVoltage(sim.voltage), 0, 32); } 
-          else if (comp.kind === 'ammeter') { ctx.fillStyle = '#34d399'; ctx.fillText(formatCurrent(sim.current), 0, 32); } 
-          else if ((comp.kind === 'relay' || comp.kind === 'npn') && sim.isLit) { ctx.fillStyle = '#34d399'; ctx.fillText(`Відкрито`, 0, 32); }
-        }
-        ctx.restore();
       }
 
       for (const comp of circuit.components) {

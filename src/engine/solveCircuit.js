@@ -32,6 +32,7 @@ export function solveCircuit(circuit, time = 0) {
 
   for (const comp of components) {
     const meta = COMPONENT_CATALOG[comp.kind];
+    if(!meta) continue;
     for (const pin of meta.pins) {
       const key = pinKey(comp.id, pin.index);
       const pos = getPinWorldPosition(comp, pin.index);
@@ -76,6 +77,7 @@ export function solveCircuit(circuit, time = 0) {
     else if (comp.kind === 'voltmeter') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: 1e9 });
     else if (comp.kind === 'probe') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); 
     else if (comp.kind === 'vcc') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: -1, voltage: 5 }); 
+    else if (comp.kind === 'node') { /* Порожньо, ядро ігнорує фізику вузла */ }
     else if (['and', 'or', 'nor'].includes(comp.kind)) {
       const inCount = comp.inputsCount || 2;
       for (let i = 0; i < inCount; i++) {
@@ -143,8 +145,7 @@ export function solveCircuit(circuit, time = 0) {
   let shortCircuit = false;
 
   for (const comp of components) {
-    if (comp.kind === 'ground') { compResults[comp.id] = { voltage: 0, current: 0, power: 0 }; continue; }
-    
+    if (comp.kind === 'ground' || comp.kind === 'node') { compResults[comp.id] = { voltage: 0, current: 0, power: 0 }; continue; }    
     let u = 0, current = 0, isLit = false;
 
     if (['and', 'or', 'nor', 'not'].includes(comp.kind)) {

@@ -42,31 +42,52 @@ export function Header({ onShowToast, onStartTutorial }) {
   };
 
   const handleImportFile = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const file = event.target.files[0];
+  if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const importedCircuit = JSON.parse(e.target.result);
-        
-        if (importedCircuit && Array.isArray(importedCircuit.components) && Array.isArray(importedCircuit.wires)) {
-          setCircuit(importedCircuit);
-          setSelectedComponentId(null);
-          setSelectedWireId(null);
-          resetSimulation(); 
-          onShowToast('Схему успішно завантажено', 'success');
-        } else {
-          onShowToast('Помилка: невірний формат файлу схеми', 'error');
-        }
-      } catch (error) {
-        onShowToast('Помилка читання файлу', 'error');
-      }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedCircuit = JSON.parse(e.target.result);
       
-      event.target.value = '';
-    };
-    reader.readAsText(file);
+      // Використовуємо жорсткий шаблон для перевірки нутрощів масивів
+      if (isValidSchema(importedCircuit)) {
+        setCircuit(importedCircuit);
+        setSelectedComponentId(null);
+        setSelectedWireId(null);
+        resetSimulation(); 
+        onShowToast('Схему успішно завантажено', 'success');
+      } else {
+        onShowToast('Помилка: невірний формат файлу схеми', 'error');
+      }
+    } catch (error) {
+      onShowToast('Помилка читання файлу (некоректний JSON)', 'error');
+    }
+    
+    event.target.value = '';
   };
+  reader.readAsText(file);
+};
+
+function isValidSchema(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+  if (!Array.isArray(data.components) || !Array.isArray(data.wires)) return false;
+
+  for (const comp of data.components) {
+    if (!comp || typeof comp !== 'object') return false;
+    if (typeof comp.id !== 'string' || typeof comp.kind !== 'string') return false;
+    if (typeof comp.x !== 'number' || typeof comp.y !== 'number') return false;
+  }
+
+  for (const wire of data.wires) {
+    if (!wire || typeof wire !== 'object') return false;
+    if (typeof wire.id !== 'string') return false;
+    if (!wire.from || typeof wire.from.componentId !== 'string') return false;
+    if (!wire.to || typeof wire.to.componentId !== 'string') return false;
+  }
+  
+  return true;
+}
 
   return (
     <header className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-10">
