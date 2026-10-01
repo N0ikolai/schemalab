@@ -81,6 +81,11 @@ export function Sidebar({ onShowToast, tutorialStep }) {
                               ? 'bg-sky-900/40 border-sky-400 ring-2 ring-sky-400/50 animate-pulse' 
                               : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 hover:border-sky-500/50'
                           }`}
+                          draggable={true}
+                           onDragStart={(e) => {
+                          e.dataTransfer.setData('componentKind', item.kind); 
+                          }}
+                          
                         >
                           <div className="w-6 h-6 rounded bg-slate-700 flex items-center justify-center text-sky-400 text-xs font-bold font-mono shrink-0">
                             {item.defaultLabelPrefix[0]}

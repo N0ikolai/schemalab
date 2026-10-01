@@ -162,7 +162,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
 
         ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
-      if (comp.kind === 'resistor') {
+        if (comp.kind === 'resistor') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-18, 0); ctx.lineTo(-14, -10); ctx.lineTo(-8, 10); ctx.lineTo(-2, -10); ctx.lineTo(4, 10); ctx.lineTo(10, -10); ctx.lineTo(14, 10); ctx.lineTo(18, 0); ctx.lineTo(30, 0); ctx.stroke();
         } else if (comp.kind === 'capacitor') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-4, 0); ctx.stroke();
@@ -193,8 +193,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(30, 0); ctx.stroke();
           ctx.fillStyle = '#ef4444'; ctx.font = 'bold 14px monospace'; ctx.fillText('+', -10, 4);
           ctx.fillStyle = '#38bdf8'; ctx.fillText('-', 10, 4);
-        }
-         else if (comp.kind === 'ac_source') {
+        } else if (comp.kind === 'ac_source') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-16, 0); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(30, 0); ctx.stroke();
           ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
@@ -415,6 +414,41 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
     return () => cancelAnimationFrame(animationFrameId);
   }, [circuit, solveResult, transform, selectedComponentId, selectedWireId, hoveredPin, wireStartPin, mouseWorldPos, tutorialStep]);
 
+  // НОВІ ФУНКЦІЇ ДЛЯ DRAG & DROP ДОДАНІ ТУТ (ПОЗА МЕЖАМИ ІНШИХ ФУНКЦІЙ)
+  const onDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    const kind = e.dataTransfer.getData('componentKind');
+    if (!kind) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const worldPos = screenToWorld(mouseX, mouseY);
+    const snapX = Math.round(worldPos.x / GRID_SIZE) * GRID_SIZE;
+    const snapY = Math.round(worldPos.y / GRID_SIZE) * GRID_SIZE;
+
+    const meta = COMPONENT_CATALOG[kind];
+    if (!meta) return;
+
+    const newComp = {
+      id: `c_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      kind: kind,
+      x: snapX,
+      y: snapY,
+      rotation: 0,
+      value: meta.defaultValue,
+      label: `${meta.defaultLabelPrefix}${circuit.components.filter(c => c.kind === kind).length + 1}`
+    };
+
+    setCircuit(prev => ({ ...prev, components: [...prev.components, newComp] }));
+    setSelectedComponentId(newComp.id);
+  };
+
   const onMouseDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect(), mouseX = e.clientX - rect.left, mouseY = e.clientY - rect.top, worldPos = screenToWorld(mouseX, mouseY);
     
@@ -481,7 +515,16 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
 
   return (
     <>
-      <canvas ref={canvasRef} className="w-full h-full cursor-crosshair block" onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onWheel={onWheel} />
+      <canvas 
+        ref={canvasRef} 
+        className="w-full h-full cursor-crosshair block" 
+        onMouseDown={onMouseDown} 
+        onMouseMove={onMouseMove} 
+        onMouseUp={onMouseUp} 
+        onWheel={onWheel}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+      />
     </>
   );
 }
