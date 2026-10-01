@@ -36,7 +36,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
     if (v <= 2.5) return '#10b981';
     if (v <= 6) return '#eab308';
     if (v <= 12) return '#f97316';
-    return '#159205';
+    return '#051a92';
   };
 
   const findPinAt = (wx, wy) => {
@@ -63,8 +63,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
       if (!cA || !cB) continue;
       const p1 = getPinWorldPosition(cA, wire.from.pinIndex);
       const p2 = getPinWorldPosition(cB, wire.to.pinIndex);
-      const pMid = { x: p2.x, y: p1.y };
-      if (distToSegmentSquared(pt, p1, pMid) <= 64 || distToSegmentSquared(pt, pMid, p2) <= 64) return wire;
+      if (distToSegmentSquared(pt, p1, p2) <= 64) return wire;
     }
     return null;
   };
@@ -122,7 +121,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
         if (!cA || !cB) continue;
         const p1 = getPinWorldPosition(cA, wire.from.pinIndex), p2 = getPinWorldPosition(cB, wire.to.pinIndex), pot = activeResult.pinVoltages[pinKey(wire.from.componentId, wire.from.pinIndex)];
         
-        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p1.y); ctx.lineTo(p2.x, p2.y);
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
         ctx.lineWidth = wire.id === selectedWireId ? 5 : 2.5; 
         ctx.strokeStyle = wire.id === selectedWireId ? '#f59e0b' : (activeResult.success ? getVoltageColor(pot) : '#475569'); 
         ctx.stroke();
@@ -134,7 +133,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           const currentVal = wireSim ? Math.abs(wireSim.current) : 0;
 
           if (Math.abs(potA) > 1 || Math.abs(potB) > 1 || currentVal > 1e-5) {
-            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
             ctx.lineWidth = 2.5; ctx.strokeStyle = '#fde047'; ctx.setLineDash([4, 10]);
             const speed = 4;
             ctx.lineDashOffset = (time / 30 * speed) % 14;
@@ -147,7 +146,7 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
         const sComp = circuit.components.find(c => c.id === wireStartPin.componentId);
         if (sComp) {
           const p1 = getPinWorldPosition(sComp, wireStartPin.pinIndex);
-          ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(mouseWorldPos.x, p1.y); ctx.lineTo(mouseWorldPos.x, mouseWorldPos.y);
+          ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(mouseWorldPos.x, mouseWorldPos.y);
           ctx.lineWidth = 2.5; ctx.strokeStyle = '#38bdf8'; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]);
         }
       }
@@ -163,13 +162,21 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
 
         ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
-        if (comp.kind === 'resistor') {
+      if (comp.kind === 'resistor') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-18, 0); ctx.lineTo(-14, -10); ctx.lineTo(-8, 10); ctx.lineTo(-2, -10); ctx.lineTo(4, 10); ctx.lineTo(10, -10); ctx.lineTo(14, 10); ctx.lineTo(18, 0); ctx.lineTo(30, 0); ctx.stroke();
         } else if (comp.kind === 'capacitor') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-4, 0); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(30, 0); ctx.stroke();
           ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(-4, 12); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(4, -12); ctx.lineTo(4, 12); ctx.stroke();
+        } else if (comp.kind === 'polarized_capacitor') {
+          ctx.strokeStyle = '#e2e8f0'; 
+          ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-4, 0); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(30, 0); ctx.stroke(); 
+          ctx.lineWidth = 3; 
+          ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(-4, 12); ctx.stroke(); 
+          ctx.beginPath(); ctx.moveTo(12, -12); ctx.quadraticCurveTo(4, 0, 12, 12); ctx.stroke(); 
+          ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#e2e8f0'; ctx.fillText('+', -14, -14);
         } else if (comp.kind === 'inductor') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-15, 0);
           ctx.bezierCurveTo(-15, -12, -5, -12, -5, 0); ctx.bezierCurveTo(-5, -12, 5, -12, 5, 0); ctx.bezierCurveTo(5, -12, 15, -12, 15, 0);
@@ -179,7 +186,15 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.beginPath(); ctx.moveTo(-8, -18); ctx.lineTo(-8, 18); ctx.lineWidth = 3; ctx.strokeStyle = '#38bdf8'; ctx.stroke();
           ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(8, 10); ctx.lineWidth = 5; ctx.strokeStyle = '#ef4444'; ctx.stroke();
           ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(30, 0); ctx.lineWidth = 2.2; ctx.strokeStyle = '#e2e8f0'; ctx.stroke();
-        } else if (comp.kind === 'ac_source') {
+        } else if (comp.kind === 'power_supply') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.roundRect(-20, -15, 40, 30, 4); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-20, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.fillStyle = '#ef4444'; ctx.font = 'bold 14px monospace'; ctx.fillText('+', -10, 4);
+          ctx.fillStyle = '#38bdf8'; ctx.fillText('-', 10, 4);
+        }
+         else if (comp.kind === 'ac_source') {
           ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-16, 0); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(30, 0); ctx.stroke();
           ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
@@ -297,6 +312,18 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.quadraticCurveTo(10, 16, 20, 0); ctx.quadraticCurveTo(10, -16, -20, -16); ctx.stroke();
           ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px monospace'; ctx.fillText('1', -5, 4);
           if (comp.kind === 'nor') { ctx.beginPath(); ctx.arc(22, 0, 3, 0, Math.PI*2); ctx.stroke(); }
+        } else if (comp.kind === 'xor') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          const inCount = comp.inputsCount || 2;
+          for (let i = 0; i < inCount; i++) {
+            const yPos = -15 + (30 / (inCount - 1 || 1)) * i;
+            ctx.beginPath(); ctx.moveTo(-30, yPos); ctx.lineTo(-14, yPos); ctx.stroke();
+          }
+          ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(30, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-16, -16); ctx.quadraticCurveTo(-6, 0, -16, 16); 
+          ctx.quadraticCurveTo(14, 16, 20, 0); ctx.quadraticCurveTo(14, -16, -16, -16); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-22, -16); ctx.quadraticCurveTo(-12, 0, -22, 16); ctx.stroke();
+          ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px monospace'; ctx.fillText('=1', -4, 4);
         } else if (comp.kind === 'not') {
           ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
           ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(-14, 0); ctx.stroke();

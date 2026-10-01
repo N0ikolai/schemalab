@@ -48,7 +48,7 @@ export function solveCircuit(circuit, time = 0) {
     }
   }
 
-  const groundPins = allPins.filter((p) => p.comp.kind === 'ground');
+  const groundPins = allPins.filter((p) => p.comp.kind === 'ground' || (p.comp.kind === 'power_supply' && p.pinIndex === 1));
   if (groundPins.length === 0) return { success: false, error: 'no-ground', errorMessageUk: 'Додайте GND.', nodeVoltages: {}, pinVoltages: {}, components: {}, wires: {} };
 
   const groundRoots = new Set();
@@ -77,8 +77,9 @@ export function solveCircuit(circuit, time = 0) {
     else if (comp.kind === 'voltmeter') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 1), resistance: 1e9 });
     else if (comp.kind === 'probe') resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); 
     else if (comp.kind === 'vcc') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: -1, voltage: 5 }); 
+    else if (comp.kind === 'dc_1pin') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: -1, voltage: comp.value }); 
     else if (comp.kind === 'node') { /* Порожньо, ядро ігнорує фізику вузла */ }
-    else if (['and', 'or', 'nor'].includes(comp.kind)) {
+    else if (['and', 'or', 'nor', 'xor'].includes(comp.kind)) {
       const inCount = comp.inputsCount || 2;
       for (let i = 0; i < inCount; i++) {
         resistors.push({ nodeA: getPinNode(comp, i), nodeB: -1, resistance: 1e9 });
@@ -107,7 +108,7 @@ export function solveCircuit(circuit, time = 0) {
       const outV = transientState.logicState[comp.id] ?? 5; 
       vSources.push({ id: comp.id, nodePos: getPinNode(comp, 1), nodeNeg: -1, voltage: outV });
     }
-    else if (comp.kind === 'battery') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: comp.value });
+    else if (comp.kind === 'battery' || comp.kind === 'power_supply') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: comp.value });
     else if (comp.kind === 'clock') {
       const freq = Math.max(comp.value, 0.1);
       const isHigh = (time * freq) % 1 < 0.5; 
@@ -119,7 +120,7 @@ export function solveCircuit(circuit, time = 0) {
     }
     else if (comp.kind === 'ammeter') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: 0 });
     else if (comp.kind === 'led' || comp.kind === 'diode') leds.push({ id: comp.id, nodeAnode: getPinNode(comp, 0), nodeCathode: getPinNode(comp, 1), vf: Math.max(comp.value, 0.1), rs: comp.kind === 'diode' ? 1 : 20 });
-    else if (comp.kind === 'capacitor') {
+    else if (comp.kind === 'capacitor' || comp.kind === 'polarized_capacitor') {
       const c = Math.max(comp.value, 1e-12);
       const req = dt / c;
       const vPrev = transientState.vCap[comp.id] || 0;
@@ -148,7 +149,7 @@ export function solveCircuit(circuit, time = 0) {
     if (comp.kind === 'ground' || comp.kind === 'node') { compResults[comp.id] = { voltage: 0, current: 0, power: 0 }; continue; }    
     let u = 0, current = 0, isLit = false;
 
-    if (['and', 'or', 'nor', 'not'].includes(comp.kind)) {
+    if (['and', 'or', 'nor', 'xor', 'not'].includes(comp.kind)) {
       const vIn1 = pinVoltages[pinKey(comp.id, 0)] ?? 0;
       let outV = 0;
       
@@ -159,16 +160,22 @@ export function solveCircuit(circuit, time = 0) {
         const inCount = comp.inputsCount || 2;
         let allHigh = true;
         let anyHigh = false;
+        let highCount = 0;
         
         for (let i = 0; i < inCount; i++) {
           const vIn = pinVoltages[pinKey(comp.id, i)] ?? 0;
-          if (vIn > 2.5) anyHigh = true;
-          else allHigh = false;
+          if (vIn > 2.5) { 
+            anyHigh = true; 
+            highCount++; 
+          } else { 
+            allHigh = false; 
+          }
         }
         
         if (comp.kind === 'and') outV = allHigh ? 5 : 0;
         else if (comp.kind === 'or') outV = anyHigh ? 5 : 0;
         else if (comp.kind === 'nor') outV = !anyHigh ? 5 : 0;
+        else if (comp.kind === 'xor') outV = (highCount % 2 !== 0) ? 5 : 0;
         
         u = pinVoltages[pinKey(comp.id, inCount)] ?? 0;
       }
@@ -209,6 +216,7 @@ export function solveCircuit(circuit, time = 0) {
       current = 0;
     }
     else if (comp.kind === 'vcc') { u = 5; current = -(mnaRes.vSourceCurrents[comp.id] ?? 0); } 
+    else if (comp.kind === 'dc_1pin') { u = comp.value; current = -(mnaRes.vSourceCurrents[comp.id] ?? 0); } 
     else if (comp.kind === 'probe') { u = pinVoltages[pinKey(comp.id, 0)] ?? 0; current = u / 1e9; isLit = u > 2.5; } 
     else {
       const v0 = pinVoltages[pinKey(comp.id, 0)] ?? 0, v1 = pinVoltages[pinKey(comp.id, 1)] ?? 0;
@@ -217,12 +225,12 @@ export function solveCircuit(circuit, time = 0) {
       if (comp.kind === 'resistor') current = u / Math.max(comp.value, 1e-4);
       else if (comp.kind === 'switch') current = u / (comp.value === 1 ? 1e-4 : 1e9);
       else if (comp.kind === 'voltmeter') current = u / 1e9;
-      else if (comp.kind === 'battery' || comp.kind === 'ac_source' || comp.kind === 'clock') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
+      else if (comp.kind === 'battery' || comp.kind === 'power_supply' || comp.kind === 'ac_source' || comp.kind === 'clock') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);      
       else if (comp.kind === 'ammeter') current = mnaRes.vSourceCurrents[comp.id] ?? 0;
       else if (comp.kind === 'led' || comp.kind === 'diode') {
         const lState = mnaRes.ledStates[comp.id];
         if (lState) { current = lState.current; isLit = lState.isOpen && current >= 0.0005; }
-      } else if (comp.kind === 'capacitor') {
+      } else if (comp.kind === 'capacitor' || comp.kind === 'polarized_capacitor') {
         const req = dt / Math.max(comp.value, 1e-12);
         current = u / req - (transientState.vCap[comp.id] || 0) / req;
         if (!isSameFrame) transientState.vCap[comp.id] = u;

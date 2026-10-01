@@ -11,6 +11,11 @@ export const COMPONENT_CATALOG = {
     pins: [{ index: 0, x: -30, y: 0, label: '1' }, { index: 1, x: 30, y: 0, label: '2' }],
     descriptionUk: 'Накопичує заряд (реактивний елемент)',
   },
+  polarized_capacitor: {
+  category: 'passive', kind: 'polarized_capacitor', nameUk: 'Електролітичний конденсатор', defaultLabelPrefix: 'C', defaultValue: 0.001, unit: 'Ф',
+  pins: [{ index: 0, x: -30, y: 0, label: '+' }, { index: 1, x: 30, y: 0, label: '-' }],
+  descriptionUk: 'Накопичує заряд. Має строгу полярність підключення (+ та -).',
+  },
   inductor: {
     category: 'passive', kind: 'inductor', nameUk: 'Котушка', defaultLabelPrefix: 'L', defaultValue: 1, unit: 'Гн',
     pins: [{ index: 0, x: -30, y: 0, label: '1' }, { index: 1, x: 30, y: 0, label: '2' }],
@@ -27,6 +32,11 @@ export const COMPONENT_CATALOG = {
     category: 'source', kind: 'battery', nameUk: 'Джерело DC', defaultLabelPrefix: 'V', defaultValue: 9, unit: 'В',
     pins: [{ index: 0, x: -30, y: 0, label: '+' }, { index: 1, x: 30, y: 0, label: '-' }],
     descriptionUk: 'Джерело постійної електрорушійної сили (DC)',
+  },
+  power_supply: {
+    category: 'source', kind: 'power_supply', nameUk: 'Блок живлення', defaultLabelPrefix: 'PSU', defaultValue: 12, unit: 'В',
+    pins: [{ index: 0, x: -30, y: 0, label: '+' }, { index: 1, x: 30, y: 0, label: '-' }],
+    descriptionUk: 'Джерело напруги із вбудованим заземленням на мінусі. Не вимагає окремої деталі GND на схемі.',
   },
   ac_source: {
     category: 'source', kind: 'ac_source', nameUk: 'Генератор AC', defaultLabelPrefix: 'VAC', defaultValue: 12, unit: 'В',
@@ -98,6 +108,11 @@ export const COMPONENT_CATALOG = {
     category: 'logic', kind: 'nor', nameUk: 'Елемент АБО-НЕ (NOR)', defaultLabelPrefix: 'U', defaultValue: 0, unit: '',
     pins: [{ index: 0, x: -30, y: -10, label: 'IN1' }, { index: 1, x: -30, y: 10, label: 'IN2' }, { index: 2, x: 30, y: 0, label: 'OUT' }],
     descriptionUk: 'Видає 1, тільки якщо на обох входах 0.',
+  },
+  xor: {
+    category: 'logic', kind: 'xor', nameUk: 'Елемент XOR (Викл. АБО)', defaultLabelPrefix: 'U', defaultValue: 0, unit: '',
+    pins: [{ index: 0, x: -30, y: -10, label: 'IN1' }, { index: 1, x: -30, y: 10, label: 'IN2' }, { index: 2, x: 30, y: 0, label: 'OUT' }],
+    descriptionUk: 'Видає логічну 1 (5В), тільки якщо рівні на входах різні.',
   },
   switch: {
     category: 'logic', kind: 'switch', nameUk: 'Вимикач', defaultLabelPrefix: 'SW', defaultValue: 0, unit: '',
