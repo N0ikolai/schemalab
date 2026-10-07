@@ -3,6 +3,7 @@ import { solveMNA } from './solverMNA.js';
 import { COMPONENT_CATALOG } from '../constants/componentCatalog.js';
 import { getPinWorldPosition } from '../utils/geometry.js';
 
+
 function pinKey(cid, pidx) { return `${cid}:${pidx}`; }
 
 const transientState = { time: 0, lastDt: 0.016, vCap: {}, iInd: {}, logicState: {} };
@@ -109,6 +110,11 @@ export function solveCircuit(circuit, time = 0) {
       vSources.push({ id: comp.id, nodePos: getPinNode(comp, 1), nodeNeg: -1, voltage: outV });
     }
     else if (comp.kind === 'battery' || comp.kind === 'power_supply') vSources.push({ id: comp.id, nodePos: getPinNode(comp, 0), nodeNeg: getPinNode(comp, 1), voltage: comp.value });
+    else if (comp.kind === 'npn') {
+      const state = transientState.logicState[comp.id] || { isOpen: false };
+      resistors.push({ nodeA: getPinNode(comp, 1), nodeB: getPinNode(comp, 2), resistance: state.isOpen ? 10 : 1e9 });
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 2), resistance: 1000 });
+    }
     else if (comp.kind === 'clock') {
       const freq = Math.max(comp.value, 0.1);
       const isHigh = (time * freq) % 1 < 0.5; 
@@ -224,6 +230,20 @@ export function solveCircuit(circuit, time = 0) {
 
       if (comp.kind === 'resistor') current = u / Math.max(comp.value, 1e-4);
       else if (comp.kind === 'switch') current = u / (comp.value === 1 ? 1e-4 : 1e9);
+      else if (comp.kind === 'npn') {
+        const vBase = pinVoltages[pinKey(comp.id, 0)] ?? 0;
+        const vCollector = pinVoltages[pinKey(comp.id, 1)] ?? 0;
+        const vEmitter = pinVoltages[pinKey(comp.id, 2)] ?? 0;
+        
+        const vBE = vBase - vEmitter;
+        const isOpen = vBE > 0.6; 
+        
+        if (!isSameFrame) transientState.logicState[comp.id] = { isOpen };
+        
+        u = vCollector - vEmitter;
+        current = u / (isOpen ? 10 : 1e9);
+        isLit = isOpen; 
+      }
       else if (comp.kind === 'voltmeter') current = u / 1e9;
       else if (comp.kind === 'battery' || comp.kind === 'power_supply' || comp.kind === 'ac_source' || comp.kind === 'clock') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);      
       else if (comp.kind === 'ammeter') current = mnaRes.vSourceCurrents[comp.id] ?? 0;
