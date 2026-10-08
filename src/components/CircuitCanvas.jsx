@@ -247,7 +247,26 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
           ctx.beginPath(); ctx.moveTo(-10, 5); ctx.lineTo(20, 20); ctx.stroke(); 
           ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(12, 20); ctx.lineTo(16, 13); ctx.closePath(); ctx.fillStyle = '#e2e8f0'; ctx.fill();
           ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; ctx.stroke(); 
-        } else if (comp.kind === 'jk_ff') {
+        }
+        else if (comp.kind === 'opamp') {
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+          
+          ctx.beginPath();
+          ctx.moveTo(-20, -20);
+          ctx.lineTo(20, 0);
+          ctx.lineTo(-20, 20);
+          ctx.closePath();
+          ctx.stroke();
+
+          ctx.beginPath(); ctx.moveTo(-30, -10); ctx.lineTo(-20, -10); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-30, 10); ctx.lineTo(-20, 10); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(30, 0); ctx.stroke();
+
+          ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#64748b';
+          ctx.fillText('-', -12, -6);
+          ctx.fillText('+', -12, 14);
+        }
+         else if (comp.kind === 'jk_ff') {
           ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
           ctx.beginPath(); ctx.rect(-20, -30, 40, 60); ctx.stroke(); 
           

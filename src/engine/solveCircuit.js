@@ -115,6 +115,12 @@ export function solveCircuit(circuit, time = 0) {
       resistors.push({ nodeA: getPinNode(comp, 1), nodeB: getPinNode(comp, 2), resistance: state.isOpen ? 10 : 1e9 });
       resistors.push({ nodeA: getPinNode(comp, 0), nodeB: getPinNode(comp, 2), resistance: 1000 });
     }
+    else if (comp.kind === 'opamp') {
+      resistors.push({ nodeA: getPinNode(comp, 0), nodeB: -1, resistance: 1e9 }); // Вхідна перешкода (-)
+      resistors.push({ nodeA: getPinNode(comp, 1), nodeB: -1, resistance: 1e9 }); // Вхідна перешкода (+)
+      const vOutPrev = transientState.vCap[comp.id] || 0;
+      vSources.push({ id: comp.id, nodePos: getPinNode(comp, 2), nodeNeg: -1, voltage: vOutPrev });
+    }
     else if (comp.kind === 'clock') {
       const freq = Math.max(comp.value, 0.1);
       const isHigh = (time * freq) % 1 < 0.5; 
@@ -243,6 +249,23 @@ export function solveCircuit(circuit, time = 0) {
         u = vCollector - vEmitter;
         current = u / (isOpen ? 10 : 1e9);
         isLit = isOpen; 
+      }
+      else if (comp.kind === 'opamp') {
+        const vInMinus = pinVoltages[pinKey(comp.id, 0)] ?? 0;
+        const vInPlus = pinVoltages[pinKey(comp.id, 1)] ?? 0;
+        let vOut = transientState.vCap[comp.id] || 0;
+        
+        // Ітеративна модель ідеального ОУ (інтегратор)
+        const diff = vInPlus - vInMinus;
+        vOut += diff * 0.2; 
+        
+        // Обмеження напруги живленням (наприклад, +/- 15В)
+        vOut = Math.max(-comp.value, Math.min(comp.value, vOut));
+        
+        if (!isSameFrame) transientState.vCap[comp.id] = vOut;
+        
+        u = vOut;
+        current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);
       }
       else if (comp.kind === 'voltmeter') current = u / 1e9;
       else if (comp.kind === 'battery' || comp.kind === 'power_supply' || comp.kind === 'ac_source' || comp.kind === 'clock') current = -(mnaRes.vSourceCurrents[comp.id] ?? 0);      

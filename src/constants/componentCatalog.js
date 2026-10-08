@@ -73,6 +73,20 @@ export const COMPONENT_CATALOG = {
     ],
     descriptionUk: 'Біполярний NPN транзистор (База, Колектор, Емітер).',
   },
+  opamp: {
+    category: 'logic', 
+    kind: 'opamp', 
+    nameUk: 'Опер. підсилювач', 
+    defaultLabelPrefix: 'OP', 
+    defaultValue: 15, 
+    unit: 'В',
+    pins: [
+      { index: 0, x: -30, y: -10, label: '-' },
+      { index: 1, x: -30, y: 10, label: '+' },
+      { index: 2, x: 30, y: 0, label: 'Out' }
+    ],
+    descriptionUk: 'Операційний підсилювач. Використовується для аналогових схем та підсилення сигналу.',
+  },
   adder: {
     category: 'logic', kind: 'adder', nameUk: 'Повний суматор', defaultLabelPrefix: 'ADD', defaultValue: 0, unit: '',
     pins: [

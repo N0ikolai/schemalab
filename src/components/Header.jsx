@@ -114,7 +114,6 @@ export function Header({ onShowToast, onStartTutorial }) {
           📂 Завантажити
         </button>
         
-        {/* Виправлена кнопка */}
         <button
           onClick={() => setShowAbout(true)}
           className="flex items-center px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 transition-colors text-xs font-bold text-slate-300"
