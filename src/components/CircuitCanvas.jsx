@@ -512,11 +512,30 @@ export function CircuitCanvas({ onShowToast, tutorialStep }) {
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.target.tagName === 'INPUT') return;
+      
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedComponentId) setCircuit(prev => ({ components: prev.components.filter(c => c.id !== selectedComponentId), wires: prev.wires.filter(w => w.from.componentId !== selectedComponentId && w.to.componentId !== selectedComponentId) }));
         else if (selectedWireId) setCircuit(prev => ({ ...prev, wires: prev.wires.filter(w => w.id !== selectedWireId) }));
       } else if (e.key === 'r' || e.key === 'R') {
         if (selectedComponentId) setCircuit(prev => ({ ...prev, components: prev.components.map(c => c.id === selectedComponentId ? { ...c, rotation: (c.rotation + 90) % 360 } : c) }));
+      } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        // РУХ СТРІЛОЧКАМИ
+        if (selectedComponentId) {
+          e.preventDefault();
+          setCircuit(prev => ({
+            ...prev,
+            components: prev.components.map(c => {
+              if (c.id !== selectedComponentId) return c;
+              let newX = c.x;
+              let newY = c.y;
+              if (e.key === 'ArrowUp') newY -= GRID_SIZE;
+              if (e.key === 'ArrowDown') newY += GRID_SIZE;
+              if (e.key === 'ArrowLeft') newX -= GRID_SIZE;
+              if (e.key === 'ArrowRight') newX += GRID_SIZE;
+              return { ...c, x: newX, y: newY };
+            })
+          }));
+        }
       } else if (e.key.length === 1) {
         const keyPress = e.key.toUpperCase();
         setCircuit(prev => {
