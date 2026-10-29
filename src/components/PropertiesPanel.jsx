@@ -36,6 +36,10 @@ export function PropertiesPanel({ onShowToast }) {
 
   const handleHotkeyChange = (e) => {
     const key = e.target.value.toUpperCase().slice(0, 1);
+    if (key === 'R' || key === 'К') {
+      onShowToast('Літера R зарезервована для повороту деталей', 'warning');
+      return; 
+    }
     setCircuit(prev => ({
       ...prev,
       components: prev.components.map(c => c.id === selectedComponent.id ? { ...c, hotkey: key } : c)
@@ -171,7 +175,7 @@ export function PropertiesPanel({ onShowToast }) {
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Клавіша керування на клавіатурі</label>
+                  <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Призначте клавішу для керування </label>
                   <input
                     type="text"
                     maxLength={1}
